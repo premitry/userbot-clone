@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Userbot{% endblock %} — Telegram Userbot</title>
+    <script>
+      (function(){try{var t=localStorage.getItem('ub-theme');if(t!=='light'){document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Work Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        display: ['Space Grotesk', 'Work Sans', 'sans-serif'],
+                        mono: ['Space Mono', 'ui-monospace', 'monospace']
+                    },
+                    colors: {
+                        gray: {50:'rgb(var(--g50)/<alpha-value>)',100:'rgb(var(--g100)/<alpha-value>)',200:'rgb(var(--g200)/<alpha-value>)',300:'rgb(var(--g300)/<alpha-value>)',400:'rgb(var(--g400)/<alpha-value>)',500:'rgb(var(--g500)/<alpha-value>)',600:'rgb(var(--g600)/<alpha-value>)',700:'rgb(var(--g700)/<alpha-value>)',800:'rgb(var(--g800)/<alpha-value>)',900:'rgb(var(--g900)/<alpha-value>)',950:'rgb(var(--g950)/<alpha-value>)'},
+                        zinc: {700:'rgb(var(--g700)/<alpha-value>)',800:'rgb(var(--g800)/<alpha-value>)',900:'rgb(var(--g900)/<alpha-value>)',950:'rgb(var(--g950)/<alpha-value>)'},
+                        slate: {700:'rgb(var(--g700)/<alpha-value>)',800:'rgb(var(--g800)/<alpha-value>)',900:'rgb(var(--g900)/<alpha-value>)'},
+                        neutral: {700:'rgb(var(--g700)/<alpha-value>)',800:'rgb(var(--g800)/<alpha-value>)',900:'rgb(var(--g900)/<alpha-value>)'},
+                        blue: {300:'rgb(var(--b300)/<alpha-value>)',400:'rgb(var(--b400)/<alpha-value>)',500:'rgb(var(--b500)/<alpha-value>)',600:'rgb(var(--b600)/<alpha-value>)',700:'rgb(var(--b700)/<alpha-value>)',800:'rgb(var(--b800)/<alpha-value>)',900:'rgb(var(--b900)/<alpha-value>)'},
+                        indigo: {300:'rgb(var(--b300)/<alpha-value>)',400:'rgb(var(--b400)/<alpha-value>)',500:'rgb(var(--b500)/<alpha-value>)',600:'rgb(var(--b600)/<alpha-value>)',700:'rgb(var(--b700)/<alpha-value>)',800:'rgb(var(--b800)/<alpha-value>)',900:'rgb(var(--b900)/<alpha-value>)'},
+                        violet: {300:'rgb(var(--b300)/<alpha-value>)',400:'rgb(var(--b400)/<alpha-value>)',500:'rgb(var(--b500)/<alpha-value>)',600:'rgb(var(--b600)/<alpha-value>)',700:'rgb(var(--b700)/<alpha-value>)'},
+                        purple: {300:'rgb(var(--b300)/<alpha-value>)',400:'rgb(var(--b400)/<alpha-value>)',500:'rgb(var(--b500)/<alpha-value>)',600:'rgb(var(--b600)/<alpha-value>)',700:'rgb(var(--b700)/<alpha-value>)'},
+                        cyan: {300:'rgb(var(--c300)/<alpha-value>)',400:'rgb(var(--c400)/<alpha-value>)',500:'rgb(var(--c500)/<alpha-value>)',600:'rgb(var(--c600)/<alpha-value>)'},
+                        green: {300:'rgb(var(--gr300)/<alpha-value>)',400:'rgb(var(--gr400)/<alpha-value>)',500:'rgb(var(--gr500)/<alpha-value>)',600:'rgb(var(--gr600)/<alpha-value>)',900:'rgb(var(--gr900)/<alpha-value>)'},
+                        emerald: {300:'rgb(var(--gr300)/<alpha-value>)',400:'rgb(var(--gr400)/<alpha-value>)',500:'rgb(var(--gr500)/<alpha-value>)',600:'rgb(var(--gr600)/<alpha-value>)'},
+                        red: {300:'rgb(var(--r300)/<alpha-value>)',400:'rgb(var(--r400)/<alpha-value>)',500:'rgb(var(--r500)/<alpha-value>)',600:'rgb(var(--r600)/<alpha-value>)',900:'rgb(var(--r900)/<alpha-value>)'},
+                        rose: {300:'rgb(var(--r300)/<alpha-value>)',400:'rgb(var(--r400)/<alpha-value>)',500:'rgb(var(--r500)/<alpha-value>)',600:'rgb(var(--r600)/<alpha-value>)'},
+                        yellow: {300:'rgb(var(--y300)/<alpha-value>)',400:'rgb(var(--y400)/<alpha-value>)',500:'rgb(var(--y500)/<alpha-value>)',600:'rgb(var(--y600)/<alpha-value>)',900:'rgb(var(--y900)/<alpha-value>)'},
+                        amber: {300:'rgb(var(--y300)/<alpha-value>)',400:'rgb(var(--y400)/<alpha-value>)',500:'rgb(var(--y500)/<alpha-value>)',600:'rgb(var(--y600)/<alpha-value>)'}
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans antialiased">
+    <button onclick="toggleTheme()" class="nb-theme-toggle" title="Dark / Light" aria-label="Toggle tema" style="position:fixed;top:16px;right:16px;z-index:60;width:auto;padding:8px 12px;">
+        <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
+        <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
+    </button>
+
+    <div class="flex min-h-screen">
+        <aside class="w-64 flex flex-col fixed h-full z-40 nb-sidebar">
+            <div class="px-5 py-5 nb-sidebar-head">
+                <h1 class="text-[15px] font-bold flex items-center gap-2.5 font-display">
+                    <span class="nb-logo"><i data-lucide="zap" class="w-4 h-4"></i></span>
+                    <span id="sb-brand">Userbot</span>
+                </h1>
+                <p class="text-xs text-gray-400 mt-1.5 pl-0.5 font-mono uppercase tracking-wide">Telegram Automation</p>
+            </div>
+
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="/dashboard" class="nav-link {% block nav_dashboard %}{% endblock %}"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+                <a href="/accounts" class="nav-link {% block nav_accounts %}{% endblock %}"><i data-lucide="users"></i><span>Accounts</span></a>
+                <a href="/messages" class="nav-link {% block nav_messages %}{% endblock %}"><i data-lucide="terminal"></i><span>Commands</span></a>
+                <a href="/auto-share" class="nav-link {% block nav_schedules %}{% endblock %}"><i data-lucide="megaphone"></i><span>Campaign</span></a>
+                <a href="/targets" class="nav-link {% block nav_targets %}{% endblock %}"><i data-lucide="target"></i><span>Targets</span></a>
+                <a href="/queue" class="nav-link {% block nav_queue %}{% endblock %}"><i data-lucide="list-checks"></i><span>Queue</span></a>
+                <a href="/settings" class="nav-link {% block nav_settings %}{% endblock %}"><i data-lucide="settings"></i><span>Settings</span></a>
+            </nav>
+
+            <div class="p-3 nb-sidebar-foot">
+                {% if user %}
+                <div class="flex items-center justify-between gap-2 px-2 py-2 card" style="box-shadow:none;">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div id="sb-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white" style="background:var(--primary);">U</div>
+                        <span id="sb-username" class="text-sm text-gray-300 truncate">User</span>
+                    </div>
+                    <button onclick="logout()" title="Logout" class="text-gray-400 hover:text-red-400 shrink-0 p-1.5"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <main id="app-main" class="flex-1 ml-64">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-6 right-6 px-4 py-3 text-sm font-medium z-[100] card"></div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        function toggleTheme(){ var d = document.documentElement.classList.toggle('dark'); try{ localStorage.setItem('ub-theme', d ? 'dark' : 'light'); }catch(e){} if (window.lucide && window.lucide.createIcons){ window.lucide.createIcons(); } }
+
+        (function () {
+            if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
+            var elName = document.getElementById('sb-username');
+            var elAvatar = document.getElementById('sb-avatar');
+            if (elName || elAvatar) {
+                fetch('/api/auth/me', { credentials: 'same-origin' })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (data) {
+                        if (!data || !data.username) return;
+                        var uname = String(data.username);
+                        if (elName) elName.textContent = uname;
+                        if (elAvatar) elAvatar.textContent = uname.charAt(0).toUpperCase();
+                    })
+                    .catch(function () {});
+            }
+            // Branding: app name + favicon + accent color dari settings
+            fetch('/api/settings/', { credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (d) {
+                    if (!d) return;
+                    if (d.app_name) {
+                        var b = document.getElementById('sb-brand');
+                        if (b) b.textContent = d.app_name;
+                    }
+                    if (d.favicon_url) {
+                        var link = document.querySelector('link[rel="icon"]');
+                        if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+                        link.href = d.favicon_url;
+                    }
+                    if (d.accent_color) {
+                        try { document.documentElement.style.setProperty('--primary', d.accent_color); } catch (e) {}
+                    }
+                })
+                .catch(function () {});
+        })();
+
+        // ── SPA navigation: pindah menu tanpa reload penuh ──
+        (function () {
+            function updateNav(path) {
+                var links = document.querySelectorAll('.nav-link');
+                for (var i = 0; i < links.length; i++) {
+                    var href = links[i].getAttribute('href');
+                    var on = (href === path);
+                    links[i].classList.toggle('bg-gray-700', on);
+                    links[i].classList.toggle('text-indigo-400', on);
+                }
+            }
+            async function spaLoad(url, push) {
+                var main = document.getElementById('app-main');
+                var ps = document.getElementById('page-scripts');
+                if (!main || !ps) { window.location.href = url; return; }
+                try {
+                    main.style.opacity = '0.55';
+                    var res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!res.ok) { window.location.href = url; return; }
+                    var html = await res.text();
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    var nMain = doc.getElementById('app-main');
+                    var nPs = doc.getElementById('page-scripts');
+                    if (!nMain) { window.location.href = url; return; }
+                    main.innerHTML = nMain.innerHTML;
+                    ps.innerHTML = '';
+                    if (nPs) {
+                        var holder = document.createElement('div');
+                        holder.innerHTML = nPs.innerHTML;
+                        var scr = holder.querySelectorAll('script');
+                        for (var i = 0; i < scr.length; i++) {
+                            var s = document.createElement('script');
+                            if (scr[i].src) { s.src = scr[i].src; } else { s.textContent = scr[i].textContent; }
+                            ps.appendChild(s);
+                        }
+                    }
+                    if (doc.title) { document.title = doc.title; }
+                    if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
+                    updateNav(new URL(url, location.origin).pathname);
+                    if (push) { history.pushState({ ub: 1 }, '', url); }
+                    window.scrollTo(0, 0);
+                    main.style.opacity = '1';
+                } catch (e) { window.location.href = url; }
+            }
+            document.addEventListener('click', function (e) {
+                var a = (e.target && e.target.closest) ? e.target.closest('a.nav-link') : null;
+                if (!a) return;
+                if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                var href = a.getAttribute('href');
+                if (!href || href.charAt(0) !== '/') return;
+                e.preventDefault();
+                if (location.pathname === href) return;
+                spaLoad(href, true);
+            });
+            window.addEventListener('popstate', function () { spaLoad(location.pathname + location.search, false); });
+        })();
+    </script>
+    <script src="/static/js/app.js"></script>
+    <div id="page-scripts">{% block scripts %}{% endblock %}</div>
+</body>
+</html>

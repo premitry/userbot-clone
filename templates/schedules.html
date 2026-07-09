@@ -1,0 +1,718 @@
+{% extends "base.html" %}
+{% block title %}Campaign{% endblock %}
+{% block nav_schedules %}bg-gray-800 text-blue-400{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700&family=Archivo+Narrow:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+.as-wrap{background:#f9f9f9;background-image:linear-gradient(rgba(37,99,235,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.1) 1px,transparent 1px);background-size:20px 20px;color:#1b1b1b;min-height:100vh;padding:24px;font-family:'Archivo Narrow','Work Sans',sans-serif;}
+.as-wrap *{box-sizing:border-box;}
+.as-head{margin-bottom:24px;}
+.as-title{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;line-height:1.1;text-transform:uppercase;margin:0 0 6px;}
+.as-sub{font-size:15px;color:#434655;margin:0;}
+.as-h3{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin:0;}
+.as-h4{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin:0;}
+.as-btn{display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:10px 18px;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .1s;}
+.as-btn:hover{background:#004ac6;}
+.as-btn:active{transform:translate(4px,4px);box-shadow:none;}
+.as-btn-full{width:100%;justify-content:center;}
+.as-btn-ghost{background:#fff;color:#1b1b1b;}
+.as-btn-ghost:hover{background:#e2e2e2;}
+.as-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px;}
+.as-tabs{display:flex;gap:8px;border-bottom:3px solid #000;margin-bottom:24px;overflow-x:auto;}
+.as-tab{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;color:#434655;border:3px solid transparent;border-bottom:none;background:transparent;cursor:pointer;white-space:nowrap;margin-bottom:-3px;}
+.as-tab:hover{color:#1b1b1b;background:#e2e2e2;}
+.as-tab.active{background:#2563eb;color:#fff;border-color:#000;border-bottom:none;}
+.as-list{display:flex;flex-direction:column;gap:16px;}
+.as-card{background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:20px;display:flex;flex-direction:column;}
+.as-card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.as-card-main{min-width:0;}
+.as-card-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;margin:0;}
+.as-card-msg{font-size:14px;color:#1b1b1b;margin:6px 0 0;}
+.as-card-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:#434655;margin:6px 0 0;word-break:break-word;}
+.as-card-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:#003ea8;margin:8px 0 0;}
+.as-card-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.as-pill{padding:6px 12px;border:2px solid #000;background:#fff;color:#1b1b1b;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer;}
+.as-pill:hover{background:#e2e2e2;}
+.as-pill-on{background:#0b8f3f;color:#fff;}
+.as-pill-off{background:#e2e2e2;color:#434655;}
+.as-pill-danger{background:#ffdad6;color:#93000a;}
+.as-pill-danger:hover{background:#ba1a1a;color:#fff;}
+.as-grid{display:grid;gap:16px;grid-template-columns:1fr;}
+.as-empty{background:#fff;border:3px solid #000;padding:40px;text-align:center;color:#434655;font-size:14px;}
+.as-msg{margin-bottom:16px;padding:12px 14px;border:3px solid #000;font-size:14px;}
+.as-msg-ok{background:#dbe1ff;color:#003ea8;}
+.as-msg-err{background:#ffdad6;color:#93000a;}
+.as-hlist{background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);overflow:hidden;}
+.as-hrow{padding:16px;border-bottom:3px solid #000;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.as-hrow:last-child{border-bottom:none;}
+.as-cmd{background:#dbe1ff;color:#003ea8;border:2px solid #000;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;}
+.as-htarget{font-size:13px;color:#434655;}
+.as-hmeta{font-family:'JetBrains Mono',monospace;font-size:11px;color:#434655;margin:6px 0 0;}
+.as-hstatus{font-size:16px;flex-shrink:0;}
+/* ===== Campaign summary + card grid ===== */
+.as-summary{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:24px;}
+.as-sumcard{background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:16px;display:flex;flex-direction:column;gap:10px;}
+.as-sumhead{display:flex;align-items:center;justify-content:space-between;}
+.as-sumlabel{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:#434655;}
+.as-sumval{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;line-height:1;}
+.as-cardgrid{display:grid;grid-template-columns:1fr;gap:16px;}
+.as-badge{padding:4px 10px;border:2px solid #000;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;white-space:nowrap;}
+.as-badge-on{background:#c9f5d8;color:#0b5f2a;}
+.as-badge-off{background:#ffe6a3;color:#7a5b00;}
+.as-cardhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px;}
+.as-cardmsg{font-size:14px;color:#434655;font-style:italic;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.as-cardstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 0;border-top:2px solid rgba(0,0,0,.08);border-bottom:2px solid rgba(0,0,0,.08);margin-bottom:12px;}
+.as-statk{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;color:#434655;margin:0 0 2px;}
+.as-statv{font-weight:700;font-size:14px;margin:0;word-break:break-word;}
+.as-cardfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;}
+.as-lastrun{font-family:'JetBrains Mono',monospace;font-size:10px;color:#434655;}
+.as-iconbtn{width:34px;height:34px;border:2px solid #000;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;}
+.as-iconbtn:hover{background:#e2e2e2;}
+.as-iconbtn:active{transform:translate(2px,2px);}
+.as-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:70;padding:16px;}
+.as-modal.hidden{display:none !important;}
+.as-modal-box{background:#fff;color:#1b1b1b;border:3px solid #000;box-shadow:8px 8px 0 0 rgba(0,0,0,1);padding:24px;width:100%;font-family:'Archivo Narrow','Work Sans',sans-serif;}
+.as-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.as-x{background:none;border:none;font-size:26px;line-height:1;cursor:pointer;color:#1b1b1b;}
+.as-form{display:flex;flex-direction:column;gap:16px;}
+.as-field{display:flex;flex-direction:column;}
+.as-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.as-label{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:#434655;margin-bottom:6px;}
+.as-hint{font-size:12px;color:#434655;margin:6px 0 0;}
+.as-check{display:flex;align-items:center;gap:8px;font-size:14px;color:#1b1b1b;}
+.as-radios{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;font-size:14px;}
+.as-radios label{display:flex;align-items:center;gap:6px;}
+.as-days{display:flex;gap:12px;flex-wrap:wrap;}
+.as-days label{display:flex;align-items:center;gap:6px;font-size:13px;}
+.as-wrap input[type=text],.as-wrap input[type=number],.as-wrap input[type=time],.as-wrap select,.as-wrap textarea,.as-modal-box input[type=text],.as-modal-box input[type=number],.as-modal-box input[type=time],.as-modal-box select,.as-modal-box textarea{width:100%;background:#fff;border:3px solid #000;border-radius:0;color:#1b1b1b;padding:10px 12px;font-family:'Archivo Narrow',sans-serif;font-size:15px;}
+.as-modal-box select{cursor:pointer;}
+.as-wrap input:focus,.as-modal-box input:focus,.as-modal-box select:focus,.as-modal-box textarea:focus{outline:none;box-shadow:3px 3px 0 0 rgba(0,0,0,1);}
+.as-wrap input[type=checkbox],.as-wrap input[type=radio],.as-modal-box input[type=checkbox],.as-modal-box input[type=radio]{width:16px;height:16px;accent-color:#2563eb;}
+.as-listbox{max-height:12rem;overflow-y:auto;border:3px solid #000;background:#f3f3f3;padding:12px;}
+.as-mrow{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:14px;color:#1b1b1b;}
+.as-mname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ===== Create Campaign modal (mockup) ===== */
+.cc-ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;font-size:18px;vertical-align:middle;font-variation-settings:'FILL' 1;}
+.cc-box{max-width:42rem;width:100%;max-height:92vh;padding:0;display:flex;flex-direction:column;overflow:hidden;}
+.cc-head{background:#2563eb;color:#fff;border-bottom:3px solid #000;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.cc-head h3{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;margin:0;color:#fff;}
+.cc-head p{font-size:13px;opacity:.9;margin:4px 0 0;}
+.cc-x{width:38px;height:38px;border:3px solid #000;background:#fff;color:#1b1b1b;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:3px 3px 0 0 rgba(0,0,0,1);font-size:22px;line-height:1;flex-shrink:0;transition:all .1s;}
+.cc-x:hover{background:#ffdad6;color:#93000a;}
+.cc-x:active{transform:translate(3px,3px);box-shadow:none;}
+.cc-form{display:flex;flex-direction:column;min-height:0;flex:1;}
+.cc-body{padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+.cc-foot{border-top:3px solid #000;padding:16px 24px;display:flex;justify-content:flex-end;gap:12px;background:#fff;flex-shrink:0;}
+.cc-lbl{display:flex;align-items:center;gap:6px;}
+.cc-suffix{display:flex;align-items:stretch;}
+.cc-suffix input{border-right:none !important;}
+.cc-suffix-tag{border:3px solid #000;border-left:none;background:#e2e2e2;padding:0 16px;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;color:#434655;white-space:nowrap;}
+.cc-info{background:#dbe1ff;border:3px solid #000;padding:8px 12px;font-size:13px;color:#003ea8;display:flex;align-items:center;gap:6px;margin-top:8px;}
+.cc-adv-toggle{border-top:3px solid #000;padding-top:14px;}
+.cc-adv-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;font-weight:600;color:#2563eb;padding:0;}
+.cc-adv-btn:hover{color:#004ac6;}
+.cc-advbox{display:flex;flex-direction:column;gap:16px;margin-top:16px;}
+.dark .as-wrap{background:#0A0E18;background-image:linear-gradient(rgba(37,99,235,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.08) 1px,transparent 1px);background-size:20px 20px;color:#E6E9F2;}
+.dark .as-title,.dark .as-h3,.dark .as-h4,.dark .as-card-title,.dark .as-card-msg,.dark .as-check,.dark .as-mrow{color:#E6E9F2;}
+.dark .as-sub,.dark .as-card-meta,.dark .as-label,.dark .as-hint,.dark .as-htarget,.dark .as-hmeta{color:#9AA3B8;}
+.dark .as-btn{box-shadow:4px 4px 0 0 #33406B;}
+.dark .as-btn-ghost{background:#13192A;color:#E6E9F2;}
+.dark .as-btn-ghost:hover{background:#1B2340;}
+.dark .as-tabs{border-color:#33406B;}
+.dark .as-tab{color:#9AA3B8;}
+.dark .as-tab:hover{background:#1B2340;color:#E6E9F2;}
+.dark .as-card{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .as-card-count{color:#B4C5FF;}
+.dark .as-pill{background:#13192A;color:#E6E9F2;border-color:#33406B;}
+.dark .as-pill:hover{background:#1B2340;}
+.dark .as-pill-off{background:#1B2340;color:#9AA3B8;}
+.dark .as-empty{background:#13192A;border-color:#33406B;color:#9AA3B8;}
+.dark .as-hlist{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .as-hrow{border-color:#33406B;}
+.dark .as-cmd{background:#1B2340;color:#B4C5FF;border-color:#33406B;}
+.dark .as-sumcard{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .as-sumlabel,.dark .as-statk,.dark .as-lastrun,.dark .as-cardmsg{color:#9AA3B8;}
+.dark .as-sumval,.dark .as-statv{color:#E6E9F2;}
+.dark .as-cardstats{border-color:rgba(255,255,255,.08);}
+.dark .as-iconbtn{background:#13192A;border-color:#33406B;color:#E6E9F2;}
+.dark .as-iconbtn:hover{background:#1B2340;}
+.dark .as-modal-box{background:#13192A;color:#E6E9F2;border-color:#33406B;box-shadow:8px 8px 0 0 #33406B;}
+.dark .as-x{color:#E6E9F2;}
+.dark .as-wrap input[type=text],.dark .as-wrap input[type=number],.dark .as-wrap input[type=time],.dark .as-wrap select,.dark .as-wrap textarea,.dark .as-modal-box input[type=text],.dark .as-modal-box input[type=number],.dark .as-modal-box input[type=time],.dark .as-modal-box select,.dark .as-modal-box textarea{background:#0F1420;color:#E6E9F2;border-color:#33406B;}
+.dark .as-wrap input:focus,.dark .as-modal-box input:focus,.dark .as-modal-box select:focus,.dark .as-modal-box textarea:focus{box-shadow:3px 3px 0 0 #33406B;}
+.dark .as-listbox{background:#0F1420;border-color:#33406B;}
+.dark .cc-head{background:#1B2340;border-color:#33406B;}
+.dark .cc-x{background:#13192A;color:#E6E9F2;border-color:#33406B;box-shadow:3px 3px 0 0 #33406B;}
+.dark .cc-x:hover{background:#3a1d1d;color:#ffb4ab;}
+.dark .cc-foot{background:#13192A;border-color:#33406B;}
+.dark .cc-suffix-tag{background:#1B2340;border-color:#33406B;color:#9AA3B8;}
+.dark .cc-info{background:#1B2340;border-color:#33406B;color:#B4C5FF;}
+.dark .cc-adv-toggle{border-color:#33406B;}
+.dark .cc-adv-btn{color:#B4C5FF;}
+@media (min-width:768px){
+ .as-wrap{padding:40px;}
+ .as-grid{grid-template-columns:repeat(2,1fr);}
+ .as-summary{grid-template-columns:repeat(4,1fr);}
+ .as-cardgrid{grid-template-columns:repeat(2,1fr);}
+}
+@media (min-width:1280px){
+ .as-cardgrid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+
+<div class="as-wrap">
+  <header class="as-head">
+    <h1 class="as-title">Campaign</h1>
+    <p class="as-sub">Kelola &amp; pantau sekuens auto-share otomatis multi-akun.</p>
+  </header>
+
+  <div class="as-tabs">
+    <button id="tabbtn-campaigns" onclick="switchTab('campaigns')" class="as-tab active">Campaigns</button>
+    <button id="tabbtn-labels" onclick="switchTab('labels')" class="as-tab">Labels</button>
+    <button id="tabbtn-history" onclick="switchTab('history')" class="as-tab">History</button>
+  </div>
+
+  <div id="tab-campaigns">
+    <div class="as-toolbar">
+      <button onclick="loadAll()" class="as-btn as-btn-ghost"><span class="cc-ms">sync</span> Refresh</button>
+      <button onclick="openAdd()" class="as-btn"><span class="cc-ms">add_circle</span> New Campaign</button>
+    </div>
+    <div id="sched-summary" class="as-summary"></div>
+    <div id="sched-list" class="as-cardgrid"><div class="as-empty">Memuat...</div></div>
+  </div>
+
+  <div id="tab-labels" class="hidden">
+    <div class="as-toolbar"><button onclick="openLabel()" class="as-btn">+ Label</button></div>
+    <div id="label-list" class="as-grid"></div>
+  </div>
+
+  <div id="tab-history" class="hidden">
+    <div class="as-toolbar"><button onclick="loadHistory()" class="as-btn as-btn-ghost">Refresh</button></div>
+    <div id="history-list" class="as-hlist"><div class="as-empty">Memuat...</div></div>
+  </div>
+</div>
+
+<div id="modal" class="hidden as-modal">
+  <div class="as-modal-box cc-box">
+    <div class="cc-head">
+      <div>
+        <h3>Create Auto Share Campaign</h3>
+        <p>Atur protokol cross-posting otomatis.</p>
+      </div>
+      <button type="button" onclick="closeModal()" class="cc-x"><span class="cc-ms">close</span></button>
+    </div>
+    <form id="sched-form" class="cc-form">
+      <div class="cc-body">
+        <div id="form-result" class="hidden as-msg"></div>
+
+        <div class="as-field"><label class="as-label cc-lbl"><span class="cc-ms">campaign</span> Nama Campaign</label><input type="text" id="s-name" required placeholder="Promo pagi"></div>
+
+        <div class="as-field"><label class="as-label cc-lbl"><span class="cc-ms">chat</span> Message Payload</label><select id="s-msg"></select></div>
+        <label class="as-check"><input type="checkbox" id="s-randmsg"> Random Message (acak pilih message aktif tiap kirim)</label>
+
+        <div class="as-grid2">
+          <div class="as-field"><label class="as-label">Mode Akun Pengirim</label><select id="s-accmode" onchange="onAccMode()"><option value="fixed">Fixed (satu akun)</option><option value="random">Random</option><option value="round_robin">Round Robin</option><option value="least_used">Least Used</option></select></div>
+          <div class="as-field" id="wrap-account"><label class="as-label">Akun (mode Fixed)</label><select id="s-account"></select></div>
+        </div>
+
+        <div class="as-field">
+          <label class="as-label cc-lbl"><span class="cc-ms">group</span> Target Vectors</label>
+          <div class="as-radios">
+            <label><input type="radio" name="tsource" value="manual_targets" checked onchange="onSource()"> Manual Targets</label>
+            <label><input type="radio" name="tsource" value="telegram_folder" onchange="onSource()"> Telegram Folder</label>
+            <label><input type="radio" name="tsource" value="manual_collection" onchange="onSource()"> Manual Collection</label>
+          </div>
+          <input type="text" id="s-target-search" oninput="fillManualTargets()" placeholder="Cari grup atau channel..." style="margin-bottom:8px;">
+          <div id="wrap-manual" class="as-listbox"></div>
+          <select id="s-folder" class="hidden"></select>
+          <select id="s-collection" class="hidden"></select>
+        </div>
+
+        <div class="as-field">
+          <label class="as-label cc-lbl"><span class="cc-ms">schedule</span> Execution Schedule</label>
+          <div class="as-radios">
+            <label><input type="radio" name="stype" value="fixed_times" checked onchange="onSchedType()"> Jam Tetap</label>
+            <label><input type="radio" name="stype" value="interval" onchange="onSchedType()"> Interval</label>
+            <label><input type="radio" name="stype" value="cron" onchange="onSchedType()"> Cron</label>
+          </div>
+          <div id="wrap-fixed">
+            <input type="text" id="s-fixed-custom" placeholder="Masukkan jam manual, pisah koma: 08:00,13:00,20:00">
+          </div>
+          <div id="wrap-interval" class="hidden"><input type="number" id="s-interval" min="1" placeholder="Interval menit, contoh 120"></div>
+          <div id="wrap-cron" class="hidden"><input type="text" id="s-cron" placeholder="0 8 * * *"></div>
+          <div class="cc-info"><span class="cc-ms" style="font-size:16px;">info</span> <span id="sched-info">Jam tetap: ketik HH:MM dipisah koma untuk beberapa jam.</span></div>
+        </div>
+
+        <div class="as-field">
+          <label class="as-label cc-lbl"><span class="cc-ms">hourglass_empty</span> Stagger Delay</label>
+          <div class="cc-suffix"><input type="number" id="s-delay" min="0" value="3"><span class="cc-suffix-tag">Detik</span></div>
+          <p class="as-hint">Jeda antar target untuk menghindari rate limit / flood.</p>
+        </div>
+
+        <div class="cc-adv-toggle">
+          <button type="button" class="cc-adv-btn" onclick="toggleAdv()"><span class="cc-ms" id="adv-icon">tune</span> <span id="adv-txt">Show Advanced Config</span></button>
+          <div id="adv-box" class="cc-advbox hidden">
+            <div class="as-field"><label class="as-label">Hari Aktif</label><div id="days-box" class="as-days"></div></div>
+            <div class="as-grid2">
+              <div class="as-field"><label class="as-label">Jam Mulai (opsional)</label><input type="time" id="s-start"></div>
+              <div class="as-field"><label class="as-label">Jam Selesai (opsional)</label><input type="time" id="s-end"></div>
+            </div>
+            <div class="as-grid2">
+              <div class="as-field"><label class="as-label">Random delay min (detik)</label><input type="number" id="s-rmin" min="0" value="0"></div>
+              <div class="as-field"><label class="as-label">Random delay max (detik)</label><input type="number" id="s-rmax" min="0" value="0"></div>
+            </div>
+            <div class="as-field"><label class="as-label">Maks per Hari / Daily Limit</label><input type="number" id="s-maxday" min="1"></div>
+            <label class="as-check"><input type="checkbox" id="s-random"> Random Target (acak urutan target)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="cc-foot">
+        <button type="button" onclick="closeModal()" class="as-btn as-btn-ghost">Cancel</button>
+        <button type="submit" class="as-btn"><span class="cc-ms">rocket_launch</span> Initialize Campaign</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="label-modal" class="hidden as-modal">
+  <div class="as-modal-box" style="max-width:28rem;">
+    <div class="as-modal-head"><h3 id="label-title" class="as-h3">Buat Label</h3><button onclick="closeLabel()" class="as-x">&times;</button></div>
+    <div id="label-result" class="hidden as-msg"></div>
+    <form id="label-form" class="as-form">
+      <input type="hidden" id="l-id">
+      <div class="as-field"><label class="as-label">Nama Label</label><input type="text" id="l-name" required placeholder="VIP Grup"></div>
+      <div class="as-field"><label class="as-label">Deskripsi (opsional)</label><input type="text" id="l-desc"></div>
+      <button type="submit" class="as-btn as-btn-full">Simpan</button>
+    </form>
+  </div>
+</div>
+
+<div id="assign-modal" class="hidden as-modal">
+  <div class="as-modal-box" style="max-width:28rem;max-height:90vh;overflow-y:auto;">
+    <div class="as-modal-head"><h3 id="assign-title" class="as-h3">Assign Target</h3><button onclick="closeAssign()" class="as-x">&times;</button></div>
+    <input type="hidden" id="a-label-id">
+    <div id="a-targets" class="as-listbox" style="max-height:18rem;margin-bottom:16px;"></div>
+    <button onclick="saveAssign()" class="as-btn as-btn-full">Simpan Assign</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var MESSAGES = [];
+var TARGETS = [];
+var LABELS = [];
+var FOLDERS = [];
+var COLLECTIONS = [];
+var SCHEDULES = [];
+var ACCOUNTS = [];
+var LOGS = [];
+var DAYS = [['0', 'Sen'], ['1', 'Sel'], ['2', 'Rab'], ['3', 'Kam'], ['4', 'Jum'], ['5', 'Sab'], ['6', 'Min']];
+var ACCMODE_LABEL = { fixed: 'Fixed', random: 'Random', round_robin: 'Round Robin', least_used: 'Least Used' };
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function msgName(id) { for (var i = 0; i < MESSAGES.length; i++) { if (MESSAGES[i].id === id) return MESSAGES[i].name; } return '-'; }
+function msgPreview(s) { if (s.random_message) return '(acak dari message aktif)'; for (var i = 0; i < MESSAGES.length; i++) { if (MESSAGES[i].id === s.message_id) { return MESSAGES[i].content || MESSAGES[i].message_text || MESSAGES[i].name || '-'; } } return '-'; }
+function labelName(id) { for (var i = 0; i < LABELS.length; i++) { if (LABELS[i].id === id) return LABELS[i].name; } return '-'; }
+function folderName(id) { for (var i = 0; i < FOLDERS.length; i++) { if (FOLDERS[i].id === id) return FOLDERS[i].name || FOLDERS[i].title; } return '-'; }
+function collName(id) { for (var i = 0; i < COLLECTIONS.length; i++) { if (COLLECTIONS[i].id === id) return COLLECTIONS[i].name; } return '-'; }
+function accName(a) { return a.first_name || (a.username ? ('@' + a.username) : (a.phone || ('Akun ' + a.id))); }
+function fmtDate(v) { if (!v) return ''; var d = new Date(v); if (isNaN(d.getTime())) return String(v); return d.toLocaleString('id-ID'); }
+function isToday(v) { if (!v) return false; var d = new Date(v); if (isNaN(d.getTime())) return false; var n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate(); }
+
+function switchTab(name) {
+    var tabs = ['campaigns', 'labels', 'history'];
+    for (var i = 0; i < tabs.length; i++) {
+        var t = tabs[i];
+        var pane = document.getElementById('tab-' + t);
+        if (pane) pane.classList.toggle('hidden', t !== name);
+        var b = document.getElementById('tabbtn-' + t);
+        if (b) b.className = 'as-tab' + (t === name ? ' active' : '');
+    }
+    if (location.hash !== '#' + name) { history.replaceState(null, '', '#' + name); }
+    if (name === 'history') loadHistory();
+}
+
+function schedInfo(s) {
+    var t = s.schedule_type || 'cron';
+    if (t === 'fixed_times') return 'Jam tetap: ' + esc(s.fixed_times || '-');
+    if (t === 'interval') return 'Tiap ' + (s.interval_minutes || 0) + ' menit';
+    return 'Cron: ' + esc(s.cron_expression || '-');
+}
+function targetInfo(s) {
+    if (s.target_source === 'telegram_folder') return 'Folder: ' + esc(folderName(s.folder_id));
+    if (s.target_source === 'manual_collection') return 'Collection: ' + esc(collName(s.collection_id));
+    if (s.label_id) return 'Label: ' + esc(labelName(s.label_id));
+    return 'Target: ' + esc(s.target_group_ids || '-');
+}
+
+function renderSummary() {
+    var box = document.getElementById('sched-summary');
+    if (!box) return;
+    var active = 0;
+    for (var i = 0; i < SCHEDULES.length; i++) { if (SCHEDULES[i].is_active) active++; }
+    var total = SCHEDULES.length;
+    var shares = 0, floods = 0;
+    for (var j = 0; j < LOGS.length; j++) {
+        if (!isToday(LOGS[j].executed_at)) continue;
+        if (LOGS[j].status === 'success') shares++;
+        else if (LOGS[j].status === 'floodwait') floods++;
+    }
+    function card(label, val, icon, color) {
+        return '<div class="as-sumcard"><div class="as-sumhead"><span class="as-sumlabel">' + label + '</span><span class="cc-ms" style="font-size:22px;color:' + color + '">' + icon + '</span></div><span class="as-sumval">' + val + '</span></div>';
+    }
+    box.innerHTML = card('Active Campaigns', active, 'play_arrow', '#0b8f3f')
+        + card('Total Campaigns', total, 'calendar_today', '#2563eb')
+        + card('Shares Hari Ini', shares, 'share', '#943700')
+        + card('FloodWait Hari Ini', floods, 'error', '#ba1a1a');
+}
+
+function renderSchedules() {
+    var box = document.getElementById('sched-list');
+    if (!SCHEDULES.length) { box.innerHTML = '<div class="as-empty">Belum ada Campaign. Klik New Campaign untuk membuat sekuens auto-share pertama.</div>'; return; }
+    var html = '';
+    for (var i = 0; i < SCHEDULES.length; i++) {
+        var s = SCHEDULES[i];
+        var badge = s.is_active ? '<span class="as-badge as-badge-on">Active</span>' : '<span class="as-badge as-badge-off">Paused</span>';
+        var accm = ACCMODE_LABEL[s.account_mode] || 'Fixed';
+        var rmsg = s.random_message ? ' \u00b7 Random Msg' : '';
+        var last = s.last_run ? ('Last run: ' + esc(fmtDate(s.last_run))) : 'Belum pernah jalan';
+        var toggle = s.is_active
+            ? '<button title="Pause" onclick="toggleSched(' + s.id + ',false)" class="as-iconbtn"><span class="cc-ms">pause</span></button>'
+            : '<button title="Resume" onclick="toggleSched(' + s.id + ',true)" class="as-iconbtn"><span class="cc-ms">play_arrow</span></button>';
+        var del = '<button title="Hapus" onclick="deleteSched(' + s.id + ')" class="as-iconbtn" style="color:#ba1a1a"><span class="cc-ms">delete</span></button>';
+        html += '<div class="as-card">'
+            + '<div class="as-cardhead"><h3 class="as-card-title">' + esc(s.name) + '</h3>' + badge + '</div>'
+            + '<p class="as-cardmsg">' + esc(msgPreview(s)) + '</p>'
+            + '<div class="as-cardstats">'
+            + '<div><p class="as-statk">Target</p><p class="as-statv">' + targetInfo(s) + '</p></div>'
+            + '<div><p class="as-statk">Jadwal</p><p class="as-statv">' + schedInfo(s) + '</p></div>'
+            + '</div>'
+            + '<div class="as-cardfoot"><span class="as-lastrun">' + last + ' \u00b7 Akun: ' + esc(accm) + rmsg + '</span>'
+            + '<div class="as-card-actions">' + toggle + del + '</div></div>'
+            + '</div>';
+    }
+    box.innerHTML = html;
+}
+
+function fillManualTargets() {
+    var q = (document.getElementById('s-target-search').value || '').toLowerCase();
+    var gb = document.getElementById('wrap-manual');
+    var list = TARGETS.filter(function (g) { return !q || String(g.title || '').toLowerCase().indexOf(q) >= 0; });
+    if (!list.length) { gb.innerHTML = '<p class="as-hint" style="color:#93000a;">Tidak ada target. Sync di menu Targets.</p>'; return; }
+    var checked = {};
+    var cur = document.querySelectorAll('.s-cb:checked');
+    for (var c = 0; c < cur.length; c++) { checked[cur[c].value] = true; }
+    var gh = '';
+    for (var k = 0; k < list.length; k++) {
+        var ck = checked[String(list[k].id)] ? ' checked' : '';
+        gh += '<label class="as-mrow"><input type="checkbox" class="s-cb" value="' + list[k].id + '"' + ck + '><span class="as-mname">' + esc(list[k].title) + '</span></label>';
+    }
+    gb.innerHTML = gh;
+}
+
+function fillSelects() {
+    var ms = document.getElementById('s-msg');
+    var mh = '<option value="">Pilih message...</option>';
+    for (var i = 0; i < MESSAGES.length; i++) { mh += '<option value="' + MESSAGES[i].id + '">' + esc(MESSAGES[i].name) + ' (' + esc(MESSAGES[i].command) + ')</option>'; }
+    ms.innerHTML = mh;
+
+    var fs = document.getElementById('s-folder');
+    var fh = '<option value="">Pilih folder Telegram...</option>';
+    for (var f = 0; f < FOLDERS.length; f++) { fh += '<option value="' + FOLDERS[f].id + '">' + esc(FOLDERS[f].name || FOLDERS[f].title) + ' (' + (FOLDERS[f].count || 0) + ')</option>'; }
+    fs.innerHTML = fh;
+
+    var cs = document.getElementById('s-collection');
+    var ch = '<option value="">Pilih collection...</option>';
+    for (var c = 0; c < COLLECTIONS.length; c++) { ch += '<option value="' + COLLECTIONS[c].id + '">' + esc(COLLECTIONS[c].name) + ' (' + (COLLECTIONS[c].count || 0) + ')</option>'; }
+    cs.innerHTML = ch;
+
+    var as = document.getElementById('s-account');
+    var ah = '<option value="">Auto (akun aktif pertama)</option>';
+    for (var a = 0; a < ACCOUNTS.length; a++) { ah += '<option value="' + ACCOUNTS[a].id + '">' + esc(accName(ACCOUNTS[a])) + '</option>'; }
+    as.innerHTML = ah;
+
+    fillManualTargets();
+
+    var db = document.getElementById('days-box');
+    var dh = '';
+    for (var d = 0; d < DAYS.length; d++) {
+        dh += '<label class="as-check"><input type="checkbox" class="day-cb" value="' + DAYS[d][0] + '" checked> ' + DAYS[d][1] + '</label>';
+    }
+    db.innerHTML = dh;
+}
+
+function onSource() {
+    var m = document.querySelector('input[name="tsource"]:checked').value;
+    document.getElementById('wrap-manual').classList.toggle('hidden', m !== 'manual_targets');
+    document.getElementById('s-target-search').classList.toggle('hidden', m !== 'manual_targets');
+    document.getElementById('s-folder').classList.toggle('hidden', m !== 'telegram_folder');
+    document.getElementById('s-collection').classList.toggle('hidden', m !== 'manual_collection');
+}
+
+function onAccMode() {
+    var m = document.getElementById('s-accmode').value;
+    document.getElementById('wrap-account').classList.toggle('hidden', m !== 'fixed');
+}
+
+function onSchedType() {
+    var t = document.querySelector('input[name="stype"]:checked').value;
+    document.getElementById('wrap-fixed').classList.toggle('hidden', t !== 'fixed_times');
+    document.getElementById('wrap-interval').classList.toggle('hidden', t !== 'interval');
+    document.getElementById('wrap-cron').classList.toggle('hidden', t !== 'cron');
+    var info = document.getElementById('sched-info');
+    if (info) {
+        if (t === 'fixed_times') info.textContent = 'Jam tetap: ketik HH:MM dipisah koma untuk beberapa jam.';
+        else if (t === 'interval') info.textContent = 'Interval: campaign jalan tiap N menit.';
+        else info.textContent = 'Cron: format menit jam hari bulan hari-pekan (contoh 0 9 * * *).';
+    }
+}
+
+function toggleAdv() {
+    var b = document.getElementById('adv-box');
+    var hidden = b.classList.toggle('hidden');
+    var t = document.getElementById('adv-txt');
+    if (t) t.textContent = hidden ? 'Show Advanced Config' : 'Hide Advanced Config';
+}
+
+function openAdd() {
+    document.getElementById('sched-form').reset();
+    document.getElementById('form-result').classList.add('hidden');
+    fillSelects();
+    onSource();
+    onAccMode();
+    onSchedType();
+    var adv = document.getElementById('adv-box');
+    if (adv) adv.classList.add('hidden');
+    var advt = document.getElementById('adv-txt');
+    if (advt) advt.textContent = 'Show Advanced Config';
+    var body = document.querySelector('#modal .cc-body');
+    if (body) body.scrollTop = 0;
+    document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+document.getElementById('sched-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var r = document.getElementById('form-result');
+    var src = document.querySelector('input[name="tsource"]:checked').value;
+    var stype = document.querySelector('input[name="stype"]:checked').value;
+    var randmsg = document.getElementById('s-randmsg').checked;
+
+    var body = {
+        name: document.getElementById('s-name').value,
+        message_id: parseInt(document.getElementById('s-msg').value) || null,
+        random_message: randmsg,
+        target_source: src,
+        account_mode: document.getElementById('s-accmode').value,
+        account_id: parseInt(document.getElementById('s-account').value) || null,
+        schedule_type: stype,
+        delay_seconds: parseInt(document.getElementById('s-delay').value) || 0,
+        random_delay_min: parseInt(document.getElementById('s-rmin').value) || 0,
+        random_delay_max: parseInt(document.getElementById('s-rmax').value) || 0,
+        random_order: document.getElementById('s-random').checked
+    };
+    function fail(msg) { r.classList.remove('hidden'); r.className = 'as-msg as-msg-err'; r.textContent = msg; }
+    if (!randmsg && !body.message_id) { fail('Pilih message atau aktifkan Random Message'); return; }
+
+    if (src === 'telegram_folder') {
+        body.folder_id = parseInt(document.getElementById('s-folder').value) || null;
+        if (!body.folder_id) { fail('Pilih folder Telegram'); return; }
+    } else if (src === 'manual_collection') {
+        body.collection_id = parseInt(document.getElementById('s-collection').value) || null;
+        if (!body.collection_id) { fail('Pilih manual collection'); return; }
+    } else {
+        var cbs = document.querySelectorAll('.s-cb:checked');
+        var ids = [];
+        for (var i = 0; i < cbs.length; i++) { ids.push(parseInt(cbs[i].value)); }
+        if (!ids.length) { fail('Pilih minimal satu target'); return; }
+        body.target_group_ids = ids;
+    }
+
+    if (stype === 'fixed_times') {
+        var times = [];
+        var custom = document.getElementById('s-fixed-custom').value.trim();
+        if (custom) { custom.split(',').forEach(function (x) { var v = x.trim(); if (v) times.push(v); }); }
+        if (!times.length) { fail('Isi minimal satu jam (contoh: 08:00,13:00)'); return; }
+        body.fixed_times = times;
+    } else if (stype === 'interval') {
+        body.interval_minutes = parseInt(document.getElementById('s-interval').value) || null;
+    } else {
+        body.cron_expression = document.getElementById('s-cron').value.trim();
+    }
+
+    var days = [];
+    var dc = document.querySelectorAll('.day-cb:checked');
+    for (var k = 0; k < dc.length; k++) { days.push(parseInt(dc[k].value)); }
+    body.days_active = days;
+
+    var start = document.getElementById('s-start').value;
+    var end = document.getElementById('s-end').value;
+    if (start) body.start_time = start;
+    if (end) body.end_time = end;
+    var maxd = document.getElementById('s-maxday').value;
+    if (maxd) body.max_per_day = parseInt(maxd);
+
+    try {
+        var res = await fetch('/api/schedules/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var data = await res.json();
+        if (res.ok) { closeModal(); loadAll(); }
+        else { fail(data.detail || 'Gagal menyimpan'); }
+    } catch (err) { fail('Koneksi error'); }
+});
+
+async function toggleSched(id, active) {
+    await fetch('/api/schedules/' + id + '/toggle', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: active }) });
+    loadAll();
+}
+async function deleteSched(id) {
+    if (!confirm('Hapus Campaign ini?')) return;
+    await fetch('/api/schedules/' + id, { method: 'DELETE' });
+    loadAll();
+}
+
+function renderLabels() {
+    var box = document.getElementById('label-list');
+    if (!LABELS.length) { box.innerHTML = '<div class="as-empty">Belum ada label.</div>'; return; }
+    var html = '';
+    for (var i = 0; i < LABELS.length; i++) {
+        var l = LABELS[i];
+        html += '<div class="as-card"><div class="as-card-row">'
+            + '<div class="as-card-main">'
+            + '<h4 class="as-card-title">' + esc(l.name) + '</h4>'
+            + '<p class="as-card-meta">' + esc(l.description || '') + '</p>'
+            + '<p class="as-card-count">' + (l.count || 0) + ' target</p>'
+            + '</div>'
+            + '<div class="as-card-actions">'
+            + '<button onclick="openAssign(' + l.id + ')" class="as-pill">Assign</button>'
+            + '<button onclick="deleteLabel(' + l.id + ')" class="as-pill as-pill-danger">Hapus</button>'
+            + '</div>'
+            + '</div></div>';
+    }
+    box.innerHTML = html;
+}
+
+function openLabel() {
+    document.getElementById('label-title').textContent = 'Buat Label';
+    document.getElementById('l-id').value = '';
+    document.getElementById('l-name').value = '';
+    document.getElementById('l-desc').value = '';
+    document.getElementById('label-result').classList.add('hidden');
+    document.getElementById('label-modal').classList.remove('hidden');
+}
+function closeLabel() { document.getElementById('label-modal').classList.add('hidden'); }
+
+document.getElementById('label-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var id = document.getElementById('l-id').value;
+    var body = { name: document.getElementById('l-name').value, description: document.getElementById('l-desc').value || null };
+    var url = id ? ('/api/labels/' + id) : '/api/labels/';
+    var method = id ? 'PUT' : 'POST';
+    var r = document.getElementById('label-result');
+    try {
+        var res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var data = await res.json();
+        if (res.ok) { closeLabel(); loadAll(); }
+        else { r.classList.remove('hidden'); r.className = 'as-msg as-msg-err'; r.textContent = data.detail || 'Gagal'; }
+    } catch (err) { r.classList.remove('hidden'); r.className = 'as-msg as-msg-err'; r.textContent = 'Koneksi error'; }
+});
+
+async function deleteLabel(id) { if (!confirm('Hapus label ini?')) return; await fetch('/api/labels/' + id, { method: 'DELETE' }); loadAll(); }
+
+function openAssign(id) {
+    var label = null;
+    for (var i = 0; i < LABELS.length; i++) { if (LABELS[i].id === id) { label = LABELS[i]; break; } }
+    if (!label) return;
+    document.getElementById('a-label-id').value = id;
+    document.getElementById('assign-title').textContent = 'Assign Target \u2014 ' + label.name;
+    var chosen = label.group_ids || [];
+    var box = document.getElementById('a-targets');
+    if (!TARGETS.length) { box.innerHTML = '<p class="as-hint" style="color:#93000a;">Belum ada target. Sync dulu di menu Targets.</p>'; }
+    else {
+        var html = '';
+        for (var j = 0; j < TARGETS.length; j++) {
+            var g = TARGETS[j];
+            var checked = (chosen.indexOf(g.id) >= 0) ? ' checked' : '';
+            html += '<label class="as-mrow"><input type="checkbox" class="a-cb" value="' + g.id + '"' + checked + '><span class="as-mname">' + esc(g.title) + '</span></label>';
+        }
+        box.innerHTML = html;
+    }
+    document.getElementById('assign-modal').classList.remove('hidden');
+}
+function closeAssign() { document.getElementById('assign-modal').classList.add('hidden'); }
+
+async function saveAssign() {
+    var id = document.getElementById('a-label-id').value;
+    var checks = document.querySelectorAll('.a-cb:checked');
+    var ids = [];
+    for (var i = 0; i < checks.length; i++) { ids.push(parseInt(checks[i].value)); }
+    await fetch('/api/labels/' + id + '/assign', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ group_ids: ids }) });
+    closeAssign();
+    loadAll();
+}
+
+function histIcon(status) {
+    if (status === 'success') return '<span style="color:#0b8f3f;">\u2713</span>';
+    if (status === 'floodwait') return '<span style="color:#946200;">\u23f1</span>';
+    if (status === 'no_permission') return '<span style="color:#c2410c;">\u26d4</span>';
+    if (status === 'failed') return '<span style="color:#ba1a1a;">\u2717</span>';
+    return '<span style="color:#434655;">\u23f3</span>';
+}
+async function loadHistory() {
+    var box = document.getElementById('history-list');
+    box.innerHTML = '<div class="as-empty">Memuat...</div>';
+    try {
+        var res = await fetch('/api/commands/logs?source=auto&limit=200', { credentials: 'same-origin' });
+        var list = res.ok ? await res.json() : [];
+        if (!list.length) { box.innerHTML = '<div class="as-empty">Belum ada riwayat Campaign.</div>'; return; }
+        var html = '';
+        for (var i = 0; i < list.length; i++) {
+            var l = list[i];
+            var err = l.error ? '<p class="as-hint" style="color:#ba1a1a;">' + esc(l.error) + '</p>' : '';
+            var acc = l.account_name ? ('<span class="as-htarget"> \u00b7 ' + esc(l.account_name) + '</span>') : '';
+            html += '<div class="as-hrow"><div class="as-hrow-main">'
+                + '<span class="as-cmd">' + esc(l.command) + '</span> '
+                + '<span class="as-htarget">' + esc(l.target_group) + '</span>' + acc
+                + '<p class="as-hmeta">' + esc(fmtDate(l.executed_at)) + '</p>' + err
+                + '</div><div class="as-hstatus">' + histIcon(l.status) + '</div></div>';
+        }
+        box.innerHTML = html;
+    } catch (e) { box.innerHTML = '<div class="as-empty" style="color:#ba1a1a;">Gagal memuat riwayat</div>'; }
+}
+
+async function loadAll() {
+    try {
+        var res = await Promise.all([
+            fetch('/api/messages/', { credentials: 'same-origin' }),
+            fetch('/api/groups/', { credentials: 'same-origin' }),
+            fetch('/api/labels/', { credentials: 'same-origin' }),
+            fetch('/api/schedules/', { credentials: 'same-origin' }),
+            fetch('/api/accounts/', { credentials: 'same-origin' }),
+            fetch('/api/folders/', { credentials: 'same-origin' }),
+            fetch('/api/collections/', { credentials: 'same-origin' }),
+            fetch('/api/commands/logs?source=auto&limit=500', { credentials: 'same-origin' })
+        ]);
+        MESSAGES = res[0].ok ? await res[0].json() : [];
+        TARGETS = res[1].ok ? await res[1].json() : [];
+        LABELS = res[2].ok ? await res[2].json() : [];
+        SCHEDULES = res[3].ok ? await res[3].json() : [];
+        ACCOUNTS = res[4].ok ? await res[4].json() : [];
+        FOLDERS = res[5].ok ? await res[5].json() : [];
+        COLLECTIONS = res[6].ok ? await res[6].json() : [];
+        LOGS = res[7] && res[7].ok ? await res[7].json() : [];
+        renderSummary();
+        renderSchedules();
+        renderLabels();
+    } catch (e) { console.error(e); }
+}
+
+loadAll();
+(function () {
+    var h = (location.hash || '').replace('#', '');
+    if (h === 'labels' || h === 'history') switchTab(h);
+})();
+</script>
+{% endblock %}

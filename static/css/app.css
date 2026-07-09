@@ -1,0 +1,125 @@
+/* ============================================================
+   Blueprint Neo-Brutalism — dark + light theme
+   Toggle via .dark class on <html>. Colors flow through CSS vars
+   so every Tailwind color utility (mapped in base.html) reskins
+   automatically in both modes.
+   ============================================================ */
+
+:root{
+  /* neutral ramp (LIGHT): high index = light surfaces, low index = dark text.
+     700 kept as a MEDIUM gray so it works both as a divider AND as a chip/button fill. */
+  --g50:19 27 46; --g100:19 27 46; --g200:30 38 58; --g300:55 62 82; --g400:88 95 120; --g500:110 117 140; --g600:180 185 200; --g700:205 209 222; --g800:255 255 255; --g900:224 231 255; --g950:236 240 255;
+  /* blue accent (blue/indigo/violet/purple map here) */
+  --b300:30 64 175; --b400:29 78 216; --b500:37 99 235; --b600:37 99 235; --b700:29 78 216; --b800:191 219 254; --b900:219 234 254;
+  /* cyan */
+  --c300:8 80 95; --c400:6 130 152; --c500:6 182 212; --c600:8 145 178;
+  /* green */
+  --gr300:20 100 50; --gr400:22 140 65; --gr500:22 163 74; --gr600:21 128 61; --gr900:200 240 210;
+  /* red */
+  --r300:150 20 20; --r400:200 30 30; --r500:220 38 38; --r600:185 26 26; --r900:255 218 214;
+  /* yellow/amber */
+  --y300:120 80 10; --y400:160 100 10; --y500:200 120 10; --y600:180 100 0; --y900:255 235 200;
+  /* component tokens */
+  --bg:#E0E7FF; --grid:rgba(15,23,42,0.06); --card:#FFFFFF; --card-2:#EEF1FF; --border:#0F172A; --shadow:#0F172A; --divider:rgba(15,23,42,0.14); --text:#131B2E; --muted:#5A6078; --primary:#2563EB; --primary-on:#FFFFFF; --accent:#06B6D4; --bw:2px; --so:4px;
+}
+.dark{
+  --g50:250 251 255; --g100:242 244 255; --g200:224 229 250; --g300:200 205 225; --g400:150 158 185; --g500:120 128 155; --g600:80 90 118; --g700:40 48 74; --g800:19 25 42; --g900:10 14 24; --g950:6 9 17;
+  --b300:147 197 253; --b400:96 165 250; --b500:59 130 246; --b600:37 99 235; --b700:29 78 216; --b800:30 58 138; --b900:23 37 84;
+  --c300:103 232 249; --c400:34 211 238; --c500:6 182 212; --c600:8 145 178;
+  --gr300:134 239 172; --gr400:74 222 128; --gr500:34 197 94; --gr600:22 163 74; --gr900:20 60 40;
+  --r300:252 165 165; --r400:248 113 113; --r500:239 68 68; --r600:220 38 38; --r900:75 20 25;
+  --y300:252 211 77; --y400:251 191 36; --y500:245 158 11; --y600:217 119 6; --y900:70 50 10;
+  --bg:#0A0E18; --grid:rgba(59,130,246,0.10); --card:#13192A; --card-2:#1B2340; --border:#E4E7F2; --shadow:#E4E7F2; --divider:rgba(228,231,242,0.12); --text:#F2F4FF; --muted:#969EB9; --primary:#3B82F6; --primary-on:#0A0E18; --accent:#22D3EE;
+}
+
+html{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+body{
+  font-family:'Work Sans', ui-sans-serif, system-ui, sans-serif;
+  color:var(--text);
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+}
+h1,h2,h3,h4,h5{ font-family:'Space Grotesk','Work Sans',sans-serif; letter-spacing:-0.01em; }
+
+a,button,input,select,textarea,.nav-link,.tab,.badge,[role="tab"]{ transition-property:background-color,border-color,color,box-shadow,transform; transition-duration:150ms; transition-timing-function:ease; }
+
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--muted); border:2px solid var(--bg); }
+* { scrollbar-width:thin; scrollbar-color:var(--muted) transparent; }
+::selection{ background:var(--primary); color:#fff; }
+
+/* ===== Sidebar ===== */
+.nb-sidebar{ background:var(--card); border-right:var(--bw) solid var(--border); }
+.nb-sidebar-head{ border-bottom:var(--bw) solid var(--border); }
+.nb-sidebar-foot{ border-top:var(--bw) solid var(--border); }
+.nb-logo{ width:2rem; height:2rem; display:flex; align-items:center; justify-content:center; color:var(--primary-on); background:var(--primary); border:var(--bw) solid var(--border); }
+
+/* ===== Nav ===== */
+/* Each nav item is its own box (border + shadow) at all times. */
+.nav-link{ display:flex; align-items:center; gap:0.7rem; padding:0.55rem 0.7rem; border:var(--bw) solid var(--border); border-radius:0; font-size:0.875rem; font-weight:600; color:var(--text); background:var(--card-2); box-shadow:2px 2px 0 0 var(--shadow); }
+.nav-link:hover{ background:var(--card); color:var(--text); border-color:var(--border); box-shadow:4px 4px 0 0 var(--shadow); transform:translate(-1px,-1px); }
+.nav-link svg{ width:18px; height:18px; flex-shrink:0; stroke-width:2.25; }
+.nav-link[class*="bg-gray-800"], .nav-link[class*="bg-gray-700"]{ background:var(--primary) !important; color:var(--primary-on) !important; border-color:var(--border); box-shadow:3px 3px 0 0 var(--shadow); }
+.nav-link[class*="bg-gray-800"] svg, .nav-link[class*="bg-gray-700"] svg{ color:var(--primary-on); }
+
+/* ===== Theme toggle ===== */
+.nb-theme-toggle{ display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.7rem; border:var(--bw) solid var(--border); background:var(--card-2); color:var(--text); font-weight:600; font-size:0.8rem; border-radius:0; cursor:pointer; }
+.nb-theme-toggle:hover{ box-shadow:3px 3px 0 0 var(--shadow); }
+.theme-icon-light{ display:none; }
+.dark .theme-icon-light{ display:inline-block; }
+.dark .theme-icon-dark{ display:none; }
+
+/* ===== Card ===== */
+.card{ background:var(--card); border:var(--bw) solid var(--border); border-radius:0; box-shadow:var(--so) var(--so) 0 0 var(--shadow); }
+
+/* ===== Inputs ===== */
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]), select, textarea{
+  background:var(--card) !important; border:var(--bw) solid var(--border) !important; border-radius:0 !important; color:var(--text); outline:none;
+}
+input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]):focus, select:focus, textarea:focus{ border-color:var(--border) !important; box-shadow:var(--so) var(--so) 0 0 var(--accent) !important; }
+input::placeholder, textarea::placeholder{ color:var(--muted); }
+select option{ background:var(--card); color:var(--text); }
+input[type=checkbox], input[type=radio]{ accent-color:var(--primary); width:1rem; height:1rem; }
+
+/* ===== Tables ===== */
+table{ border-collapse:collapse; }
+thead th{ background:var(--card-2); color:var(--muted); font-family:'Space Mono',monospace; font-weight:700; font-size:0.68rem; letter-spacing:0.04em; text-transform:uppercase; border-bottom:var(--bw) solid var(--border); }
+tbody tr{ border-bottom:1px solid var(--divider); }
+tbody tr:last-child{ border-bottom:none; }
+tbody tr:hover{ background:var(--card-2); }
+
+/* ===== Buttons ===== */
+button{ border-radius:0; font-weight:600; }
+button:active{ transform:translate(1px,1px); }
+button[class*="bg-blue-6"], button[class*="bg-indigo-6"], button[class*="bg-violet-6"], button[class*="bg-purple-6"], button[class*="bg-green-6"], button[class*="bg-red-6"], button[class*="bg-yellow-6"], button[class*="bg-amber-5"], button[class*="bg-amber-6"], a[class*="bg-blue-6"], a[class*="bg-indigo-6"], label[class*="bg-blue-6"]{
+  border:var(--bw) solid var(--border) !important; box-shadow:var(--so) var(--so) 0 0 var(--shadow); border-radius:0 !important;
+}
+button[class*="bg-blue-6"]:active, button[class*="bg-indigo-6"]:active, button[class*="bg-green-6"]:active, button[class*="bg-red-6"]:active{ transform:translate(var(--so),var(--so)); box-shadow:0 0 0 0 var(--shadow); }
+
+/* ===== Badge ===== */
+.badge{ display:inline-flex; align-items:center; gap:0.25rem; padding:0.12rem 0.5rem; border-radius:0; font-family:'Space Mono',monospace; font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; border:2px solid var(--border); }
+.badge-primary{ background:var(--primary); color:var(--primary-on); }
+.badge-success{ background:rgb(var(--gr500)); color:#04240f; }
+.badge-warning{ background:rgb(var(--y500)); color:#241a02; }
+.badge-danger{ background:rgb(var(--r500)); color:#2a0606; }
+
+/* ===== Tabs ===== */
+.tab{ padding:0.45rem 0.9rem; border:var(--bw) solid transparent; border-radius:0; font-size:0.875rem; font-weight:600; color:var(--muted); cursor:pointer; }
+.tab:hover{ color:var(--text); background:var(--card-2); }
+.tab.active{ color:var(--primary-on); background:var(--primary); border-color:var(--border); box-shadow:3px 3px 0 0 var(--shadow); }
+
+/* ===== Modal / dropdown ===== */
+.modal-backdrop{ background:rgba(10,14,24,0.55); backdrop-filter:blur(2px); }
+.dropdown-menu{ background:var(--card); border:var(--bw) solid var(--border); border-radius:0; box-shadow:var(--so) var(--so) 0 0 var(--shadow); }
+
+/* ===== Pagination ===== */
+.page-btn{ min-width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; padding:0 0.5rem; border:var(--bw) solid var(--border); background:var(--card); color:var(--text); font-size:0.8rem; font-family:'Space Mono',monospace; border-radius:0; }
+.page-btn:hover{ box-shadow:3px 3px 0 0 var(--shadow); }
+.page-btn.active{ background:var(--primary); color:var(--primary-on); }
+
+code{ font-family:'Space Mono',monospace; font-size:0.75rem; }
+
+@keyframes slideIn{ from{ transform:translateY(8px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+.animate-slide-in{ animation:slideIn 0.25s ease-out; }

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+{% block nav_logs %}bg-gray-700 text-indigo-400{% endblock %}
+
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+.rootui{ --p:#004ac6; --pc:#2563eb; --po:#ffffff; --ink:#1b1b1b; --sv:#e2e2e2; --out:#737686; --err:#ba1a1a; --term-bg:#0f172a; --term:#4cd7f6; background-color:#e0e7ff; background-image:linear-gradient(to right, rgba(37,99,235,0.10) 1px, transparent 1px), linear-gradient(to bottom, rgba(37,99,235,0.10) 1px, transparent 1px); background-size:32px 32px; min-height:100vh; color:var(--ink); font-family:'Archivo Narrow',sans-serif; padding:24px; }
+.rootui *{ box-sizing:border-box; }
+.rootui .msi{ font-family:'Material Symbols Outlined'; font-weight:normal; font-style:normal; line-height:1; display:inline-block; white-space:nowrap; direction:ltr; -webkit-font-smoothing:antialiased; font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24; vertical-align:middle; }
+.rd-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+.rd-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:44px; line-height:1; text-transform:uppercase; letter-spacing:-0.02em; margin:0; }
+.rd-sub{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--out); margin:8px 0 0; text-transform:uppercase; letter-spacing:0.04em; }
+@media(max-width:700px){ .rd-title{ font-size:32px; } }
+.neo-card{ background:#ffffff; border:3px solid var(--ink); box-shadow:6px 6px 0 0 var(--ink); }
+.neo-btn{ border:3px solid var(--ink); box-shadow:4px 4px 0 0 var(--ink); transition:all .1s ease; cursor:pointer; background:#ffffff; color:var(--ink); font-family:'JetBrains Mono',monospace; text-transform:uppercase; font-weight:700; font-size:13px; letter-spacing:0.04em; display:inline-flex; align-items:center; gap:8px; }
+.neo-btn:active{ transform:translate(4px,4px); box-shadow:none; }
+.neo-btn.pri{ background:var(--p); color:#ffffff; }
+.panel-head{ border-bottom:3px solid var(--ink); padding:13px 18px; background:var(--sv); display:flex; align-items:center; justify-content:space-between; }
+.panel-head h3{ margin:0; font-family:'JetBrains Mono',monospace; font-size:13px; text-transform:uppercase; font-weight:700; letter-spacing:0.05em; display:flex; align-items:center; gap:8px; }
+.panel-body{ padding:20px; }
+.stat-desc{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--out); }
+.rl-input{ width:100%; border:3px solid var(--ink); background:#ffffff; padding:11px 14px; font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--ink); outline:none; }
+.rl-input:focus{ box-shadow:4px 4px 0 0 var(--pc); }
+.rl-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.fbtn{ border:3px solid var(--ink); background:#ffffff; color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:6px 12px; cursor:pointer; }
+.fbtn.on{ background:var(--p); color:#ffffff; }
+.term{ background:var(--term-bg); color:var(--term); font-family:'Space Mono','JetBrains Mono',monospace; padding:20px; overflow-y:auto; font-size:13px; line-height:1.65; }
+.term .ln{ display:flex; gap:14px; margin-bottom:4px; }
+.term .t{ color:#64748b; white-space:nowrap; }
+.term .tag{ font-weight:700; white-space:nowrap; }
+.term .tag.ok{ color:#4ade80; }
+.term .tag.err{ color:#f87171; }
+.term .tag.warn{ color:#fbbf24; }
+.term .tag.cmd{ color:#c4b5fd; }
+.term .msg{ color:#cbd5e1; word-break:break-word; }
+.term .src{ color:#38bdf8; }
+</style>
+
+<div class="rootui">
+    <div class="rd-head">
+        <div>
+            <h1 class="rd-title">Terminal Logs</h1>
+            <p class="rd-sub">Worker &amp; Command Activity Stream</p>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap">
+            <button class="neo-btn" style="padding:10px 16px" onclick="exportCsv()"><span class="msi">download</span> Export CSV</button>
+            <button class="neo-btn pri" style="padding:10px 16px" onclick="loadLogs()"><span class="msi">refresh</span> Refresh</button>
+        </div>
+    </div>
+
+    <div class="neo-card" style="margin-bottom:20px">
+        <div class="panel-body">
+            <input id="log-search" class="rl-input" oninput="setQ(this.value)" placeholder="Cari command, target, akun, pesan, atau error...">
+            <div class="rl-filters" id="status-filters"></div>
+            <div class="rl-filters" id="source-filters"></div>
+        </div>
+    </div>
+
+    <div class="neo-card" style="display:flex; flex-direction:column; overflow:hidden">
+        <div class="panel-head"><h3><span class="msi">terminal</span> Log Stream</h3><span id="rl-count" class="stat-desc"></span></div>
+        <div class="term" id="log-term" style="max-height:65vh"><div class="ln"><span class="msg">Memuat...</span></div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var LOGS = [];
+var SF = '';
+var SRC = '';
+var Q = '';
+var STATUSES = ['', 'success', 'failed', 'floodwait', 'no_permission'];
+var STATUS_LABEL = { '': 'Semua', success: 'Success', failed: 'Failed', floodwait: 'FloodWait', no_permission: 'No Permission' };
+var SOURCES = ['', 'manual', 'auto', 'queue'];
+var SOURCE_LABEL = { '': 'Semua sumber', manual: 'Manual', auto: 'Auto Share', queue: 'Queue' };
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function fmtDate(v) { if (!v) return '--/-- --:--:--'; var d = new Date(v); if (isNaN(d.getTime())) return String(v); return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+
+function tagFor(s) {
+    if (s === 'success') return { cls: 'ok', label: 'OK' };
+    if (s === 'failed') return { cls: 'err', label: 'ERR' };
+    if (s === 'floodwait') return { cls: 'warn', label: 'WAIT' };
+    if (s === 'no_permission') return { cls: 'warn', label: 'NOPERM' };
+    return { cls: 'cmd', label: 'PEND' };
+}
+
+function renderFilters() {
+    var sb = document.getElementById('status-filters');
+    var h1 = '';
+    for (var i = 0; i < STATUSES.length; i++) {
+        var s = STATUSES[i];
+        h1 += '<button onclick="setSF(\'' + s + '\')" class="fbtn' + (s === SF ? ' on' : '') + '">' + esc(STATUS_LABEL[s]) + '</button>';
+    }
+    sb.innerHTML = h1;
+    var cb = document.getElementById('source-filters');
+    var h2 = '';
+    for (var j = 0; j < SOURCES.length; j++) {
+        var c = SOURCES[j];
+        h2 += '<button onclick="setSRC(\'' + c + '\')" class="fbtn' + (c === SRC ? ' on' : '') + '">' + esc(SOURCE_LABEL[c]) + '</button>';
+    }
+    cb.innerHTML = h2;
+}
+
+function setSF(s) { SF = s; renderFilters(); render(); }
+function setSRC(s) { SRC = s; renderFilters(); render(); }
+function setQ(v) { Q = (v || '').toLowerCase(); render(); }
+
+function matchQ(l) {
+    if (!Q) return true;
+    var hay = [l.command, l.target_group, l.account_name, l.message, l.error].join(' ').toLowerCase();
+    return hay.indexOf(Q) >= 0;
+}
+
+function render() {
+    var box = document.getElementById('log-term');
+    var list = LOGS.filter(function (l) {
+        if (SF && l.status !== SF) return false;
+        if (SRC && (l.source || 'manual') !== SRC) return false;
+        if (!matchQ(l)) return false;
+        return true;
+    });
+    document.getElementById('rl-count').textContent = list.length + ' entries';
+    if (!list.length) { box.innerHTML = '<div class="ln"><span class="msg">// Tidak ada log yang cocok</span></div>'; return; }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var l = list[i];
+        var tg = tagFor(l.status);
+        var src = l.source || 'manual';
+        var msg = (l.command ? l.command + ' ' : '') + '→ ' + (l.target_group || '-');
+        if (l.account_name) { msg += ' (' + l.account_name + ')'; }
+        if (l.error) { msg += ' | ' + l.error; }
+        html += '<div class="ln">'
+            + '<span class="t">' + esc(fmtDate(l.executed_at)) + '</span>'
+            + '<span class="tag ' + tg.cls + '">[' + tg.label + ']</span>'
+            + '<span class="src">' + esc(src) + '</span>'
+            + '<span class="msg">' + esc(msg) + '</span>'
+            + '</div>';
+    }
+    box.innerHTML = html;
+}
+
+function exportCsv() {
+    var params = [];
+    if (Q) params.push('q=' + encodeURIComponent(Q));
+    if (SF) params.push('status=' + encodeURIComponent(SF));
+    if (SRC) params.push('source=' + encodeURIComponent(SRC));
+    var url = '/api/commands/logs/export' + (params.length ? ('?' + params.join('&')) : '');
+    window.location = url;
+}
+
+async function loadLogs() {
+    var box = document.getElementById('log-term');
+    try {
+        var res = await fetch('/api/commands/logs?limit=500', { credentials: 'same-origin' });
+        LOGS = res.ok ? await res.json() : [];
+        renderFilters();
+        render();
+    } catch (e) { box.innerHTML = '<div class="ln"><span class="tag err">[ERR]</span><span class="msg">Gagal memuat log</span></div>'; }
+}
+
+loadLogs();
+</script>
+{% endblock %}

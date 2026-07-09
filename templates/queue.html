@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}Queue{% endblock %}
+{% block nav_queue %}bg-gray-700 text-indigo-400{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700&family=Archivo+Narrow:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+.q-wrap{background:#f9f9f9;background-image:linear-gradient(rgba(37,99,235,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.08) 1px,transparent 1px);background-size:24px 24px;color:#1b1b1b;min-height:100vh;padding:24px;font-family:'Archivo Narrow','Work Sans',sans-serif;}
+.q-wrap *{box-sizing:border-box;}
+.q-wrap .material-symbols-outlined{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 1;line-height:1;font-size:20px;vertical-align:middle;}
+.q-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:24px;}
+.q-title{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;line-height:1.1;text-transform:uppercase;margin:0 0 6px;display:flex;align-items:center;gap:12px;}
+.q-dot{width:12px;height:12px;border-radius:50%;background:#0b8f3f;display:inline-block;animation:qpulse 1.4s infinite;}
+@keyframes qpulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.q-sub{font-size:15px;color:#434655;margin:0;}
+.q-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1b1b1b;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:10px 16px;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .1s;}
+.q-btn:hover{background:#e2e2e2;}
+.q-btn:active{transform:translate(4px,4px);box-shadow:none;}
+.q-btn-primary{background:#2563eb;color:#fff;}
+.q-btn-primary:hover{background:#004ac6;}
+.q-btn-danger{background:#ba1a1a;color:#fff;}
+.q-btn-danger:hover{background:#93000a;}
+.q-btn-ok{background:#0b8f3f;color:#fff;}
+.q-btn-warn{background:#fed01b;color:#574500;}
+.q-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.q-scard{background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:16px;}
+.q-scard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.q-scard-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#434655;}
+.q-scard-val{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;line-height:1;}
+.q-scard-bar{margin-top:12px;height:6px;background:#e2e2e2;border:1px solid #000;overflow:hidden;}
+.q-scard-bar>div{height:100%;background:#2563eb;}
+.q-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
+.q-toolbar-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;}
+.q-auto{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:#434655;cursor:pointer;}
+.q-auto input{width:16px;height:16px;accent-color:#2563eb;}
+.q-layout{display:flex;gap:16px;align-items:flex-start;}
+.q-panel{flex:1;min-width:0;background:#fff;border:3px solid #000;box-shadow:6px 6px 0 0 rgba(0,0,0,1);overflow:hidden;}
+.q-table-scroll{overflow-x:auto;}
+.q-table{width:100%;border-collapse:collapse;min-width:720px;}
+.q-table th{text-align:left;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:#434655;border-bottom:3px solid #000;background:#f3f3f3;}
+.q-table td{padding:12px 14px;border-bottom:3px solid #000;font-size:14px;}
+.q-table tbody tr:last-child td{border-bottom:none;}
+.q-table tbody tr{cursor:pointer;transition:background .1s;}
+.q-table tbody tr:hover{background:#dbe1ff;}
+.q-jid{font-family:'JetBrains Mono',monospace;font-size:12px;}
+.q-cname{font-family:'Space Grotesk',sans-serif;font-weight:600;color:#003ea8;}
+.q-cur{font-size:13px;color:#434655;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.q-badge{display:inline-block;padding:2px 8px;border:2px solid #000;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;}
+.q-prog{width:130px;}
+.q-prog-bar{width:100%;height:8px;background:#e2e2e2;border:1px solid #000;overflow:hidden;}
+.q-prog-bar>div{height:100%;}
+.q-prog-txt{font-family:'JetBrains Mono',monospace;font-size:10px;color:#434655;margin-top:3px;}
+.q-acts{display:flex;gap:6px;}
+.q-iconbtn{border:2px solid #000;background:#fff;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;}
+.q-iconbtn:hover{transform:translate(-1px,-1px);box-shadow:2px 2px 0 0 #000;}
+.q-iconbtn .material-symbols-outlined{font-size:17px;}
+.q-empty{padding:48px 24px;text-align:center;color:#434655;font-size:14px;}
+.q-drawer{width:340px;flex-shrink:0;background:#fff;border:3px solid #000;box-shadow:6px 6px 0 0 rgba(0,0,0,1);overflow:hidden;align-self:stretch;}
+.q-drawer.hidden{display:none;}
+.q-drawer-head{background:#000;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;}
+.q-drawer-head span{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;}
+.q-drawer-x{background:none;border:none;color:#fff;cursor:pointer;font-size:20px;line-height:1;}
+.q-drawer-body{padding:16px;display:flex;flex-direction:column;gap:16px;}
+.q-d-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;color:#434655;margin-bottom:4px;letter-spacing:.05em;}
+.q-d-id{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;}
+.q-d-sec{border-top:3px solid #000;padding-top:12px;}
+.q-d-msg{background:#f3f3f3;border:2px solid #000;padding:10px;font-size:13px;word-break:break-word;}
+.q-d-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dark .q-wrap{background:#0A0E18;background-image:linear-gradient(rgba(37,99,235,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.06) 1px,transparent 1px);background-size:24px 24px;color:#E6E9F2;}
+.dark .q-title{color:#E6E9F2;}
+.dark .q-sub,.dark .q-scard-label,.dark .q-cur,.dark .q-prog-txt,.dark .q-auto,.dark .q-d-label{color:#9AA3B8;}
+.dark .q-btn{background:#13192A;color:#E6E9F2;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .q-btn:hover{background:#1B2340;}
+.dark .q-btn-primary{background:#2563eb;color:#fff;}
+.dark .q-btn-danger{background:#ba1a1a;color:#fff;}
+.dark .q-btn-ok{background:#0b8f3f;color:#fff;}
+.dark .q-scard{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .q-scard-bar{background:#1B2340;border-color:#33406B;}
+.dark .q-panel{background:#13192A;border-color:#33406B;box-shadow:6px 6px 0 0 #33406B;}
+.dark .q-table th{background:#0F1420;border-color:#33406B;color:#9AA3B8;}
+.dark .q-table td{border-color:#33406B;}
+.dark .q-table tbody tr:hover{background:#1B2340;}
+.dark .q-cname{color:#B4C5FF;}
+.dark .q-prog-bar,.dark .q-scard-bar{background:#1B2340;}
+.dark .q-iconbtn{background:#13192A;border-color:#33406B;}
+.dark .q-iconbtn:hover{box-shadow:2px 2px 0 0 #33406B;}
+.dark .q-empty{color:#9AA3B8;}
+.dark .q-drawer{background:#13192A;border-color:#33406B;box-shadow:6px 6px 0 0 #33406B;}
+.dark .q-drawer-head{background:#0F1420;}
+.dark .q-d-id{color:#E6E9F2;}
+.dark .q-d-sec{border-color:#33406B;}
+.dark .q-d-msg{background:#0F1420;border-color:#33406B;}
+@media (min-width:768px){.q-wrap{padding:40px;}.q-cards{grid-template-columns:repeat(4,1fr);}}
+@media (max-width:960px){.q-drawer{display:none !important;}}
+</style>
+
+<div class="q-wrap">
+  <header class="q-head">
+    <div>
+      <h1 class="q-title">Queue <span class="q-dot"></span></h1>
+      <p class="q-sub">Monitor progress pengiriman Auto Share / Campaign secara realtime.</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="q-btn" onclick="load()"><span class="material-symbols-outlined">refresh</span> Refresh</button>
+    </div>
+  </header>
+
+  <div class="q-cards">
+    <div class="q-scard"><div class="q-scard-top"><span class="q-scard-label">Active Jobs</span><span class="material-symbols-outlined" style="color:#2563eb;">running_with_errors</span></div><div class="q-scard-val" id="c-active">0</div><div class="q-scard-bar"><div id="c-active-bar" style="width:0%"></div></div></div>
+    <div class="q-scard"><div class="q-scard-top"><span class="q-scard-label">In Queue</span><span class="material-symbols-outlined" style="color:#946200;">pending</span></div><div class="q-scard-val" id="c-wait">0</div></div>
+    <div class="q-scard"><div class="q-scard-top"><span class="q-scard-label">Success Rate</span><span class="material-symbols-outlined" style="color:#0b8f3f;">verified</span></div><div class="q-scard-val" id="c-rate">–</div></div>
+    <div class="q-scard"><div class="q-scard-top"><span class="q-scard-label">Completed</span><span class="material-symbols-outlined" style="color:#434655;">task_alt</span></div><div class="q-scard-val" id="c-done">0</div></div>
+  </div>
+
+  <div class="q-toolbar">
+    <span class="q-toolbar-title">Active &amp; Pending Deliveries</span>
+    <label class="q-auto"><input type="checkbox" id="auto" checked> Auto-refresh</label>
+  </div>
+
+  <div class="q-layout">
+    <div class="q-panel">
+      <div class="q-table-scroll">
+        <table class="q-table">
+          <thead><tr><th>Job ID</th><th>Campaign</th><th>Current Target</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
+          <tbody id="queue-rows"><tr><td colspan="6" class="q-empty">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside id="q-drawer" class="q-drawer hidden">
+      <div class="q-drawer-head"><span>Job Details</span><button class="q-drawer-x" onclick="closeDrawer()">&times;</button></div>
+      <div class="q-drawer-body" id="q-drawer-body"></div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var JOBS = [];
+var SEL = null;
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+var STMAP = {
+    waiting: ['#eeeeee', '#434655', 'WAITING'],
+    running: ['#dbe1ff', '#003ea8', 'SENDING'],
+    paused: ['#ffe083', '#574500', 'PAUSED'],
+    done: ['#c9f2d6', '#0b6b30', 'DONE'],
+    error: ['#ffdad6', '#93000a', 'ERROR'],
+    canceled: ['#e2e2e2', '#434655', 'CANCELED']
+};
+var BARCOLOR = { waiting: '#9aa3b8', running: '#2563eb', paused: '#946200', done: '#0b8f3f', error: '#ba1a1a', canceled: '#737686' };
+
+function stBadge(st) {
+    var c = STMAP[st] || ['#e2e2e2', '#434655', String(st || '').toUpperCase()];
+    return '<span class="q-badge" style="background:' + c[0] + ';color:' + c[1] + ';">' + c[2] + '</span>';
+}
+
+function pct(j) { var t = j.total || 0; return t ? Math.round((j.completed || 0) * 100 / t) : 0; }
+
+function rowActions(j) {
+    var h = '';
+    if (j.status === 'running') h += '<button class="q-iconbtn" title="Pause" onclick="event.stopPropagation();act(' + j.id + ',\'pause\')"><span class="material-symbols-outlined">pause</span></button>';
+    if (j.status === 'paused') h += '<button class="q-iconbtn" title="Resume" onclick="event.stopPropagation();act(' + j.id + ',\'resume\')"><span class="material-symbols-outlined" style="color:#0b8f3f;">play_arrow</span></button>';
+    if (j.status === 'running' || j.status === 'paused' || j.status === 'waiting') h += '<button class="q-iconbtn" title="Cancel" onclick="event.stopPropagation();act(' + j.id + ',\'cancel\')"><span class="material-symbols-outlined" style="color:#ba1a1a;">cancel</span></button>';
+    if (j.status === 'done' || j.status === 'error' || j.status === 'canceled') h += '<button class="q-iconbtn" title="Hapus" onclick="event.stopPropagation();delJob(' + j.id + ')"><span class="material-symbols-outlined" style="color:#ba1a1a;">delete</span></button>';
+    return '<div class="q-acts">' + h + '</div>';
+}
+
+function render() {
+    var box = document.getElementById('queue-rows');
+    if (!JOBS.length) { box.innerHTML = '<tr><td colspan="6" class="q-empty">Belum ada job. Job muncul saat Auto Share / Campaign berjalan.</td></tr>'; return; }
+    var html = '';
+    for (var i = 0; i < JOBS.length; i++) {
+        var j = JOBS[i];
+        var p = pct(j);
+        var bar = BARCOLOR[j.status] || '#2563eb';
+        html += '<tr onclick="openDrawer(' + j.id + ')">'
+            + '<td class="q-jid">#' + j.id + '</td>'
+            + '<td class="q-cname">' + esc(j.name || ('Job #' + j.id)) + '</td>'
+            + '<td><div class="q-cur">' + esc(j.current_target || '—') + '</div></td>'
+            + '<td>' + stBadge(j.status) + '</td>'
+            + '<td class="q-prog"><div class="q-prog-bar"><div style="width:' + p + '%;background:' + bar + ';"></div></div><div class="q-prog-txt">' + (j.completed || 0) + '/' + (j.total || 0) + ' · ✓' + (j.success_count || 0) + ' ✗' + (j.failed_count || 0) + '</div></td>'
+            + '<td>' + rowActions(j) + '</td>'
+            + '</tr>';
+    }
+    box.innerHTML = html;
+}
+
+function renderSummary() {
+    var active = 0, wait = 0, done = 0, succ = 0, fail = 0;
+    for (var i = 0; i < JOBS.length; i++) {
+        var j = JOBS[i];
+        if (j.status === 'running' || j.status === 'paused') active++;
+        if (j.status === 'waiting') wait++;
+        if (j.status === 'done') done++;
+        succ += (j.success_count || 0);
+        fail += (j.failed_count || 0);
+    }
+    document.getElementById('c-active').textContent = active;
+    document.getElementById('c-wait').textContent = wait;
+    document.getElementById('c-done').textContent = done;
+    var tot = succ + fail;
+    document.getElementById('c-rate').textContent = tot ? (Math.round(succ * 1000 / tot) / 10) + '%' : '–';
+    var abar = JOBS.length ? Math.round(active * 100 / JOBS.length) : 0;
+    document.getElementById('c-active-bar').style.width = abar + '%';
+}
+
+function openDrawer(id) {
+    SEL = id;
+    var j = null;
+    for (var i = 0; i < JOBS.length; i++) { if (JOBS[i].id === id) { j = JOBS[i]; break; } }
+    if (!j) return;
+    var p = pct(j);
+    var bar = BARCOLOR[j.status] || '#2563eb';
+    var acts = '';
+    if (j.status === 'running') acts += '<button class="q-btn q-btn-warn" onclick="act(' + j.id + ',\'pause\')"><span class="material-symbols-outlined">pause</span> Pause</button>';
+    if (j.status === 'paused') acts += '<button class="q-btn q-btn-ok" onclick="act(' + j.id + ',\'resume\')"><span class="material-symbols-outlined">play_arrow</span> Resume</button>';
+    if (j.status === 'running' || j.status === 'paused' || j.status === 'waiting') acts += '<button class="q-btn q-btn-danger" onclick="act(' + j.id + ',\'cancel\')"><span class="material-symbols-outlined">cancel</span> Cancel</button>';
+    if (j.status === 'done' || j.status === 'error' || j.status === 'canceled') acts += '<button class="q-btn q-btn-danger" onclick="delJob(' + j.id + ')"><span class="material-symbols-outlined">delete</span> Hapus</button>';
+    var err = j.error ? '<div class="q-d-sec"><div class="q-d-label">Error</div><div class="q-d-msg" style="color:#ba1a1a;">' + esc(j.error) + '</div></div>' : '';
+    var cur = j.current_target ? '<div class="q-d-sec"><div class="q-d-label">Current Target</div><div class="q-d-msg">' + esc(j.current_target) + '</div></div>' : '';
+    document.getElementById('q-drawer-body').innerHTML =
+        '<div><div class="q-d-label">Selected Job</div><div class="q-d-id">#' + j.id + '</div><div style="margin-top:8px;">' + stBadge(j.status) + '</div></div>'
+        + '<div class="q-d-sec"><div class="q-d-label">Campaign</div><div style="font-weight:600;">' + esc(j.name || ('Job #' + j.id)) + '</div></div>'
+        + '<div class="q-d-sec"><div class="q-d-label">Progress</div><div class="q-prog-bar"><div style="width:' + p + '%;background:' + bar + ';"></div></div><div class="q-prog-txt">' + (j.completed || 0) + ' / ' + (j.total || 0) + ' (' + p + '%) · ✓ ' + (j.success_count || 0) + ' ✗ ' + (j.failed_count || 0) + '</div></div>'
+        + cur + err
+        + '<div class="q-d-sec"><div class="q-d-label">Job Actions</div><div class="q-d-actions">' + (acts || '<span class="q-prog-txt">Tidak ada aksi.</span>') + '</div></div>';
+    document.getElementById('q-drawer').classList.remove('hidden');
+}
+function closeDrawer() { SEL = null; document.getElementById('q-drawer').classList.add('hidden'); }
+
+async function load() {
+    try {
+        var res = await fetch('/api/queue/', { credentials: 'same-origin' });
+        JOBS = res.ok ? await res.json() : [];
+        render();
+        renderSummary();
+        if (SEL != null) {
+            var still = false;
+            for (var i = 0; i < JOBS.length; i++) { if (JOBS[i].id === SEL) { still = true; break; } }
+            if (still) { openDrawer(SEL); } else { closeDrawer(); }
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function act(id, action) {
+    await fetch('/api/queue/' + id + '/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: action }) });
+    load();
+}
+async function delJob(id) {
+    if (!confirm('Hapus job ini?')) return;
+    await fetch('/api/queue/' + id, { method: 'DELETE' });
+    if (SEL === id) closeDrawer();
+    load();
+}
+
+function tick() { var a = document.getElementById('auto'); if (a && a.checked) load(); }
+
+if (window.__qTimer) { clearInterval(window.__qTimer); }
+load();
+window.__qTimer = setInterval(tick, 2000);
+</script>
+{% endblock %}

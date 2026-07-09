@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Targets{% endblock %}
+{% block nav_groups %}bg-gray-700 text-indigo-400{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-2xl font-bold">🎯 Targets</h2>
+            <p class="text-sm text-gray-500 mt-1">Grup, channel, private & bot tempat mengirim pesan otomatis</p>
+        </div>
+        <button onclick="syncTargets(this)" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">🔄 Sync</button>
+    </div>
+
+    <div id="sync-result" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
+
+    <div class="flex gap-2 mb-4 flex-wrap" id="type-filters"></div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-gray-400 border-b border-gray-700">
+                    <tr>
+                        <th class="text-left p-4">Nama</th>
+                        <th class="text-left p-4">Username</th>
+                        <th class="text-left p-4">Tipe</th>
+                        <th class="text-left p-4">Members</th>
+                        <th class="text-left p-4">Bisa Kirim</th>
+                        <th class="text-left p-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="target-rows">
+                    <tr><td colspan="6" class="p-8 text-center text-gray-500">Memuat...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h3 class="text-xl font-bold">🏷️ Labels</h3>
+            <p class="text-sm text-gray-500 mt-1">Kelompokkan target agar mudah dipilih di Auto Share</p>
+        </div>
+        <button onclick="openLabel()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">+ Label</button>
+    </div>
+    <div id="label-list" class="grid gap-3 md:grid-cols-2"></div>
+</div>
+
+<div id="label-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md mx-4 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="label-title" class="text-lg font-semibold">Buat Label</h3>
+            <button onclick="closeLabel()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <div id="label-result" class="hidden mb-3 p-3 rounded-lg text-sm"></div>
+        <form id="label-form" class="space-y-3">
+            <input type="hidden" id="l-id">
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Nama Label</label>
+                <input type="text" id="l-name" required class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg outline-none focus:border-indigo-500" placeholder="VIP Grup">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Deskripsi (opsional)</label>
+                <input type="text" id="l-desc" class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg outline-none focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">Simpan</button>
+        </form>
+    </div>
+</div>
+
+<div id="assign-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="assign-title" class="text-lg font-semibold">Assign Target</h3>
+            <button onclick="closeAssign()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <input type="hidden" id="a-label-id">
+        <div id="a-targets" class="max-h-72 overflow-y-auto bg-gray-900 border border-gray-700 rounded-lg p-3 space-y-1 mb-4"></div>
+        <button onclick="saveAssign()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">Simpan Assign</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var TARGETS = [];
+var LABELS = [];
+var TYPEF = '';
+var TYPES = ['', 'group', 'supergroup', 'channel', 'private', 'bot'];
+var TYPE_LABEL = { '': 'Semua', group: 'Group', supergroup: 'Supergroup', channel: 'Channel', private: 'Private', bot: 'Bot' };
+
+function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function typeBadge(t) {
+    var color = 'bg-gray-700 text-gray-300';
+    if (t === 'channel') color = 'bg-purple-900/50 text-purple-300';
+    else if (t === 'bot') color = 'bg-blue-900/50 text-blue-300';
+    else if (t === 'private') color = 'bg-teal-900/50 text-teal-300';
+    else color = 'bg-green-900/50 text-green-300';
+    return '<span class="px-2 py-0.5 rounded text-xs ' + color + '">' + esc(TYPE_LABEL[t] || t) + '</span>';
+}
+
+function renderFilters() {
+    var box = document.getElementById('type-filters');
+    var html = '';
+    for (var i = 0; i < TYPES.length; i++) {
+        var t = TYPES[i];
+        var active = (t === TYPEF) ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700';
+        html += '<button onclick="setFilter(\'' + t + '\')" class="px-3 py-1.5 rounded-lg text-xs font-medium ' + active + '">' + esc(TYPE_LABEL[t]) + '</button>';
+    }
+    box.innerHTML = html;
+}
+
+function setFilter(t) { TYPEF = t; renderFilters(); renderTargets(); }
+
+function renderTargets() {
+    var box = document.getElementById('target-rows');
+    var list = TARGETS.filter(function (g) { return !TYPEF || g.type === TYPEF; });
+    if (!list.length) {
+        box.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-gray-500">Belum ada target. Klik Sync untuk mengambil dari Telegram.</td></tr>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var g = list[i];
+        var uname = g.username ? ('@' + g.username) : '-';
+        var cansend = g.can_send ? '<span class="text-green-400 text-xs">✓ Ya</span>' : '<span class="text-red-400 text-xs">✗ Tidak</span>';
+        var status = g.is_active ? '<span class="text-green-400 text-xs">● Aktif</span>' : '<span class="text-gray-500 text-xs">○ Off</span>';
+        html += '<tr class="border-b border-gray-700/50 hover:bg-gray-700/30">'
+            + '<td class="p-4 font-medium">' + esc(g.title) + '</td>'
+            + '<td class="p-4 text-gray-400 text-xs">' + esc(uname) + '</td>'
+            + '<td class="p-4">' + typeBadge(g.type) + '</td>'
+            + '<td class="p-4 text-gray-400">' + (g.member_count || 0) + '</td>'
+            + '<td class="p-4">' + cansend + '</td>'
+            + '<td class="p-4">' + status + '</td>'
+            + '</tr>';
+    }
+    box.innerHTML = html;
+}
+
+function renderLabels() {
+    var box = document.getElementById('label-list');
+    if (!LABELS.length) {
+        box.innerHTML = '<div class="bg-gray-800 rounded-xl border border-gray-700 p-8 text-center text-gray-500 text-sm md:col-span-2">Belum ada label.</div>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < LABELS.length; i++) {
+        var l = LABELS[i];
+        html += '<div class="bg-gray-800 rounded-xl border border-gray-700 p-4">'
+            + '<div class="flex justify-between items-start">'
+            + '<div class="min-w-0">'
+            + '<h4 class="font-semibold">' + esc(l.name) + '</h4>'
+            + '<p class="text-xs text-gray-500 mt-1">' + esc(l.description || '') + '</p>'
+            + '<p class="text-xs text-indigo-300 mt-2">' + (l.count || 0) + ' target</p>'
+            + '</div>'
+            + '<div class="flex items-center gap-2 shrink-0">'
+            + '<button onclick="openAssign(' + l.id + ')" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs">Assign</button>'
+            + '<button onclick="deleteLabel(' + l.id + ')" class="px-3 py-1.5 bg-red-900/50 text-red-400 hover:bg-red-900 rounded-lg text-xs">🗑️</button>'
+            + '</div>'
+            + '</div>'
+            + '</div>';
+    }
+    box.innerHTML = html;
+}
+
+async function loadAll() {
+    try {
+        var res = await Promise.all([
+            fetch('/api/groups/', { credentials: 'same-origin' }),
+            fetch('/api/labels/', { credentials: 'same-origin' })
+        ]);
+        TARGETS = res[0].ok ? await res[0].json() : [];
+        LABELS = res[1].ok ? await res[1].json() : [];
+        renderFilters();
+        renderTargets();
+        renderLabels();
+    } catch (e) { console.error(e); }
+}
+
+async function syncTargets(btn) {
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = '⏳ Syncing...';
+    var result = document.getElementById('sync-result');
+    result.classList.add('hidden');
+    try {
+        var res = await fetch('/api/groups/sync', { method: 'POST' });
+        var data = await res.json();
+        result.classList.remove('hidden');
+        if (res.ok) {
+            result.className = 'mb-4 p-3 rounded-lg text-sm bg-green-900/50 border border-green-700 text-green-300';
+            result.textContent = '✅ ' + data.message;
+            loadAll();
+        } else {
+            result.className = 'mb-4 p-3 rounded-lg text-sm bg-red-900/50 border border-red-700 text-red-300';
+            result.textContent = '❌ ' + (data.detail || 'Gagal sync');
+        }
+    } catch (err) {
+        result.classList.remove('hidden');
+        result.className = 'mb-4 p-3 rounded-lg text-sm bg-red-900/50 border border-red-700 text-red-300';
+        result.textContent = '❌ Koneksi error';
+    }
+    btn.disabled = false;
+    btn.textContent = old;
+}
+
+function openLabel() {
+    document.getElementById('label-title').textContent = 'Buat Label';
+    document.getElementById('l-id').value = '';
+    document.getElementById('l-name').value = '';
+    document.getElementById('l-desc').value = '';
+    document.getElementById('label-result').classList.add('hidden');
+    document.getElementById('label-modal').classList.remove('hidden');
+}
+function closeLabel() { document.getElementById('label-modal').classList.add('hidden'); }
+
+document.getElementById('label-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var id = document.getElementById('l-id').value;
+    var body = { name: document.getElementById('l-name').value, description: document.getElementById('l-desc').value || null };
+    var url = id ? ('/api/labels/' + id) : '/api/labels/';
+    var method = id ? 'PUT' : 'POST';
+    var r = document.getElementById('label-result');
+    try {
+        var res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var data = await res.json();
+        if (res.ok) { closeLabel(); loadAll(); }
+        else { r.classList.remove('hidden'); r.className = 'mb-3 p-3 rounded-lg text-sm bg-red-900/50 border border-red-700 text-red-300'; r.textContent = '❌ ' + (data.detail || 'Gagal'); }
+    } catch (err) { r.classList.remove('hidden'); r.className = 'mb-3 p-3 rounded-lg text-sm bg-red-900/50 border border-red-700 text-red-300'; r.textContent = '❌ Koneksi error'; }
+});
+
+async function deleteLabel(id) {
+    if (!confirm('Hapus label ini?')) return;
+    await fetch('/api/labels/' + id, { method: 'DELETE' });
+    loadAll();
+}
+
+function openAssign(id) {
+    var label = null;
+    for (var i = 0; i < LABELS.length; i++) { if (LABELS[i].id === id) { label = LABELS[i]; break; } }
+    if (!label) return;
+    document.getElementById('a-label-id').value = id;
+    document.getElementById('assign-title').textContent = 'Assign Target — ' + label.name;
+    var chosen = label.group_ids || [];
+    var box = document.getElementById('a-targets');
+    if (!TARGETS.length) { box.innerHTML = '<p class="text-xs text-red-400">Belum ada target. Sync dulu.</p>'; }
+    else {
+        var html = '';
+        for (var j = 0; j < TARGETS.length; j++) {
+            var g = TARGETS[j];
+            var checked = (chosen.indexOf(g.id) >= 0) ? ' checked' : '';
+            html += '<label class="flex items-center gap-2 text-sm text-gray-300 py-0.5">'
+                + '<input type="checkbox" class="a-cb w-4 h-4" value="' + g.id + '"' + checked + '>'
+                + '<span class="truncate">' + esc(g.title) + '</span></label>';
+        }
+        box.innerHTML = html;
+    }
+    document.getElementById('assign-modal').classList.remove('hidden');
+}
+function closeAssign() { document.getElementById('assign-modal').classList.add('hidden'); }
+
+async function saveAssign() {
+    var id = document.getElementById('a-label-id').value;
+    var checks = document.querySelectorAll('.a-cb:checked');
+    var ids = [];
+    for (var i = 0; i < checks.length; i++) { ids.push(parseInt(checks[i].value)); }
+    await fetch('/api/labels/' + id + '/assign', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ group_ids: ids }) });
+    closeAssign();
+    loadAll();
+}
+
+loadAll();
+</script>
+{% endblock %}
