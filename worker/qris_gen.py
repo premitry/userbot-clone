@@ -32,7 +32,12 @@ def parse_amount(text: str, allow_short: bool = False) -> int:
 
     allow_short param diabaikan (untuk kompatibilitas backward call site).
     """
-    t = str(text or "").strip()
+    t = "" if text is None else str(text)
+    t = t.strip()
+    # buang karakter invisible yang kadang ikut ter-kirim dari keyboard HP (BOM, zero-width, dll)
+    for ch in ("\u200b", "\u200c", "\u200d", "\ufeff", "\u2060"):
+        t = t.replace(ch, "")
+    t = t.strip()
     if not t.isdigit():
         raise ValueError("Format nominal tidak valid. Gunakan angka penuh, contoh: /qris 10000")
     amount_int = int(t)
@@ -42,12 +47,28 @@ def parse_amount(text: str, allow_short: bool = False) -> int:
 
 
 def _parse_tlv(s: str):
+    """Parse rantai TLV EMVCo, dengan validasi agar payload rusak tidak crash dengan trace Python.
+
+    Returns list of (tag, value). Kalau struktur tidak valid (tag/length bukan digit,
+    value terpotong), raise ValueError dengan pesan ramah.
+    """
     out = []
     i = 0
     n = len(s)
     while i + 4 <= n:
         tag = s[i:i + 2]
-        length = int(s[i + 2:i + 4])
+        lraw = s[i + 2:i + 4]
+        if not tag.isdigit() or not lraw.isdigit():
+            raise ValueError(
+                f"Base QRIS payload rusak (field tidak valid di posisi {i}). "
+                "Silakan UPLOAD ULANG gambar QRIS statis lewat halaman Command, jangan paste manual."
+            )
+        length = int(lraw)
+        if i + 4 + length > n:
+            raise ValueError(
+                "Base QRIS payload rusak (ujung payload terpotong). "
+                "Silakan upload ulang gambar QRIS statis."
+            )
         val = s[i + 4:i + 4 + length]
         out.append((tag, val))
         i += 4 + length
@@ -93,9 +114,18 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
     TIDAK PERNAH int(amount) sebelum validasi isdigit.
     Short format otomatis ditolak oleh parse_amount.
     """
-    base = (base_payload or "").strip().replace("\n", "").replace(" ", "")
+    base = (base_payload or "").strip().replace("\n", "").replace("\r", "").replace(" ", "")
+    # Buang invisible chars yang kadang ikut dari paste web/HP
+    for ch in ("\u200b", "\u200c", "\u200d", "\ufeff", "\u2060", "\t"):
+        base = base.replace(ch, "")
     if not base:
         raise ValueError("Base QRIS payload belum diatur")
+    # Basic sanity: payload QRIS/EMVCo hanya berisi digit ASCII (tag+length+value printable numerik/kecuali CRC hex)
+    if not base.isascii():
+        raise ValueError(
+            "Base QRIS payload mengandung karakter non-ASCII. "
+            "Silakan upload ulang gambar QRIS statis lewat halaman Command."
+        )
 
     # ── Normalisasi amount (strict via parse_amount, no direct int before check) ──
     if isinstance(amount, bool):
@@ -112,8 +142,16 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
         raise ValueError("Nominal harus lebih dari 0")
 
     data = {}
-    for tag, val in _parse_tlv(base):
-        data[tag] = val
+    try:
+        for tag, val in _parse_tlv(base):
+            data[tag] = val
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(
+            "Base QRIS payload tidak valid / rusak. "
+            f"Silakan upload ulang gambar QRIS statis. Detail: {e}"
+        )
 
     data["01"] = "12"            # dynamic
     data.pop("63", None)          # drop old CRC
