@@ -17,6 +17,7 @@ from auth import get_current_user
 from database import get_db
 from models import MediaLibrary, Message, User, WorkflowStep
 from schemas import MessageCreate, MessageResponse, MessageUpdate
+from worker.qris_gen import validate_qris_payload
 
 router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
@@ -111,6 +112,7 @@ async def decode_qris(file: UploadFile = File(...), user: User = Depends(get_cur
     try:
         from worker.qris_gen import decode_qris_from_image
         payload = decode_qris_from_image(tmp)
+        payload = validate_qris_payload(payload)
     except Exception as e:
         raise HTTPException(400, f"Gagal decode QRIS dari gambar: {e}")
     finally:
@@ -122,6 +124,12 @@ async def decode_qris(file: UploadFile = File(...), user: User = Depends(get_cur
 @router.post("/", response_model=MessageResponse)
 def create_message(body: MessageCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     cmd = _normalize(body.command)
+    qris_payload = body.qris_payload
+    if qris_payload:
+        try:
+            qris_payload = validate_qris_payload(qris_payload)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
     active = get_active_account_id(db)
     dup = db.query(Message).filter(
         Message.command == cmd, Message.account_id == active
@@ -139,7 +147,7 @@ def create_message(body: MessageCreate, db: Session = Depends(get_db), user: Use
         channel_post_url=body.channel_post_url,
         channel_mode=body.channel_mode or "specific",
         channel_chat_id=body.channel_chat_id,
-        qris_payload=body.qris_payload,
+        qris_payload=qris_payload,
         qris_min=body.qris_min,
         qris_max=body.qris_max,
         is_active=True if body.is_active is None else body.is_active,
@@ -169,9 +177,17 @@ def update_message(message_id: int, body: MessageUpdate, db: Session = Depends(g
         if dup:
             raise HTTPException(400, f"Command {cmd} sudah ada di akun ini")
         m.command = cmd
+    qris_payload = body.qris_payload
+    if qris_payload:
+        try:
+            qris_payload = validate_qris_payload(qris_payload)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
     for field in ("name", "type", "action", "content", "media_url", "channel_post_url",
                   "channel_mode", "channel_chat_id", "qris_payload", "qris_min", "qris_max", "is_active"):
         val = getattr(body, field)
+        if field == "qris_payload" and val is not None:
+            val = qris_payload
         if val is not None:
             setattr(m, field, val)
     m.updated_at = datetime.utcnow()
