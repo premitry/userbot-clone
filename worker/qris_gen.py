@@ -9,7 +9,7 @@ Short format (5k, 5K, 10rb, 25.000, Rp10000) DITOLAK total.
 UI toggle 'Support Short Amount' sudah tidak berpengaruh lagi karena enforcement dilakukan di backend.
 """
 
-import qrcode
+_INVISIBLE_CHARS = ("\u200b", "\u200c", "\u200d", "\ufeff", "\u2060")
 
 
 def _crc16(payload: str) -> str:
@@ -61,7 +61,7 @@ def _parse_tlv(s: str):
         if not tag.isdigit() or not lraw.isdigit():
             raise ValueError(
                 f"Base QRIS payload rusak (field tidak valid di posisi {i}). "
-                "Silakan UPLOAD ULANG gambar QRIS statis lewat halaman Command, jangan paste manual."
+                "Klik Decode dari gambar QRIS lagi di halaman Command lalu simpan ulang."
             )
         length = int(lraw)
         if i + 4 + length > n:
@@ -72,7 +72,40 @@ def _parse_tlv(s: str):
         val = s[i + 4:i + 4 + length]
         out.append((tag, val))
         i += 4 + length
+    if i != n:
+        raise ValueError(
+            f"Base QRIS payload rusak (sisa data tidak valid di posisi {i}). "
+            "Klik Decode dari gambar QRIS lagi di halaman Command lalu simpan ulang."
+        )
     return out
+
+
+def normalize_qris_payload(payload: str) -> str:
+    """Bersihkan payload tanpa merusak spasi di dalam value TLV.
+
+    Spasi biasa adalah karakter valid di payload QRIS (contoh nama merchant
+    "Ahmad Yahya"). Sebelumnya semua spasi dihapus, sehingga length TLV tidak
+    cocok dan payload valid dari hasil upload bisa rusak di posisi berikutnya.
+    """
+    base = "" if payload is None else str(payload)
+    for ch in ("\r", "\n", "\t", *_INVISIBLE_CHARS):
+        base = base.replace(ch, "")
+    return base.strip()
+
+
+def validate_qris_payload(payload: str) -> str:
+    base = normalize_qris_payload(payload)
+    if not base:
+        raise ValueError("Base QRIS payload belum diatur")
+    if not base.isascii():
+        raise ValueError(
+            "Base QRIS payload mengandung karakter non-ASCII. "
+            "Decode ulang dari gambar QRIS statis lewat halaman Command."
+        )
+    fields = _parse_tlv(base)
+    if not fields or fields[0] != ("00", "01"):
+        raise ValueError("Payload yang terbaca bukan payload QRIS/EMVCo yang valid")
+    return base
 
 
 def decode_qris_from_image(path: str) -> str:
@@ -101,9 +134,9 @@ def decode_qris_from_image(path: str) -> str:
         except Exception:
             continue
         if data.startswith("00"):  # EMVCo payload diawali tag 00 (000201...)
-            return data
-    # fallback: kembalikan hasil pertama
-    return results[0].data.decode("utf-8", "ignore").strip()
+            return validate_qris_payload(data)
+    # fallback: validasi hasil pertama supaya payload rusak tidak tersimpan
+    return validate_qris_payload(results[0].data.decode("utf-8", "ignore"))
 
 
 def build_dynamic_qris(base_payload: str, amount) -> str:
@@ -114,18 +147,7 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
     TIDAK PERNAH int(amount) sebelum validasi isdigit.
     Short format otomatis ditolak oleh parse_amount.
     """
-    base = (base_payload or "").strip().replace("\n", "").replace("\r", "").replace(" ", "")
-    # Buang invisible chars yang kadang ikut dari paste web/HP
-    for ch in ("\u200b", "\u200c", "\u200d", "\ufeff", "\u2060", "\t"):
-        base = base.replace(ch, "")
-    if not base:
-        raise ValueError("Base QRIS payload belum diatur")
-    # Basic sanity: payload QRIS/EMVCo hanya berisi digit ASCII (tag+length+value printable numerik/kecuali CRC hex)
-    if not base.isascii():
-        raise ValueError(
-            "Base QRIS payload mengandung karakter non-ASCII. "
-            "Silakan upload ulang gambar QRIS statis lewat halaman Command."
-        )
+    base = validate_qris_payload(base_payload)
 
     # ── Normalisasi amount (strict via parse_amount, no direct int before check) ──
     if isinstance(amount, bool):
@@ -166,6 +188,8 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
 
 
 def generate_qris_image(payload: str, out_path: str = "/tmp/qris_dynamic.png") -> str:
+    import qrcode
+
     img = qrcode.make(payload)
     img.save(out_path)
     return out_path
