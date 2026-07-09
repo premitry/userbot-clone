@@ -78,7 +78,7 @@ Kelola banyak akun Telegram, bikin custom command, jadwalkan Auto Share campaign
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/premitry/userbot.git
+git clone https://github.com/premitry/userbot-clone.git
 cd userbot
 ```
 
@@ -197,7 +197,7 @@ sudo apt install -y python3 python3-pip python3-venv git nginx certbot python3-c
 
 ```bash
 cd /root
-git clone https://github.com/premitry/userbot.git
+git clone https://github.com/premitry/userbot-clone.git
 cd userbot
 ```
 
