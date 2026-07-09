@@ -1,0 +1,666 @@
+{% extends "base.html" %}
+{% block title %}Targets{% endblock %}
+{% block nav_targets %}bg-gray-800 text-blue-400{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700&family=Archivo+Narrow:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+.tg-wrap{background:#f9f9f9;color:#1b1b1b;min-height:100vh;padding:24px;font-family:'Archivo Narrow','Work Sans',sans-serif;}
+.tg-wrap *{box-sizing:border-box;}
+.tg-wrap .material-symbols-outlined{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 1;line-height:1;font-size:20px;vertical-align:middle;}
+.tg-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:24px;}
+.tg-title{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;line-height:1.1;text-transform:uppercase;margin:0 0 6px;}
+.tg-sub{font-size:15px;color:#434655;margin:0;}
+.tg-h3{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;margin:0;}
+.tg-h4{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin:0;}
+.tg-btn{display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;border:3px solid #000;border-radius:0;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:10px 18px;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .1s;}
+.tg-btn:hover{background:#004ac6;}
+.tg-btn:active{transform:translate(4px,4px);box-shadow:none;}
+.tg-btn-full{width:100%;justify-content:center;}
+.tg-btn-sm{padding:7px 12px;font-size:11px;box-shadow:3px 3px 0 0 rgba(0,0,0,1);}
+.tg-btn-danger{background:#ba1a1a;}
+.tg-btn-danger:hover{background:#93000a;}
+.tg-ddwrap{position:relative;}
+.tg-dd{position:absolute;right:0;top:100%;margin-top:8px;width:14rem;background:#fff;border:3px solid #000;box-shadow:8px 8px 0 0 rgba(0,0,0,1);display:none;z-index:20;}
+.tg-dd::before{content:'';position:absolute;left:0;right:0;top:-11px;height:11px;background:transparent;}
+.tg-ddwrap:hover .tg-dd{display:block;}
+.tg-dd.open{display:block;}
+.tg-dd button{display:block;width:100%;text-align:left;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;border:none;border-bottom:3px solid #000;background:#fff;cursor:pointer;}
+.tg-dd button:last-child{border-bottom:none;}
+.tg-dd button:hover{background:#2563eb;color:#fff;}
+.tg-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.tg-scard{background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:16px;display:flex;flex-direction:column;gap:8px;}
+.tg-scard-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#434655;}
+.tg-scard-hi{background:#dbe1ff;}
+.tg-scard-hi .tg-scard-label{color:#003ea8;}
+.tg-scard-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;}
+.tg-tabs{display:flex;gap:8px;border-bottom:3px solid #000;margin-bottom:16px;overflow-x:auto;}
+.tg-tab{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;color:#434655;border:3px solid transparent;border-bottom:none;background:transparent;cursor:pointer;white-space:nowrap;margin-bottom:-3px;}
+.tg-tab:hover{color:#1b1b1b;background:#e2e2e2;}
+.tg-tab.active{background:#2563eb;color:#fff;border-color:#000;border-bottom:none;}
+.tg-searchbar{position:relative;margin-bottom:16px;}
+.tg-searchbar .material-symbols-outlined{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#434655;}
+.tg-searchbar input{padding-left:44px !important;height:48px;}
+.tg-seg-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.tg-seg{padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;background:#fff;color:#1b1b1b;border:2px solid #000;cursor:pointer;}
+.tg-seg:hover{background:#e2e2e2;}
+.tg-seg.active{background:#004ac6;color:#fff;}
+.tg-panel{background:#fff;border:3px solid #000;box-shadow:8px 8px 0 0 rgba(0,0,0,1);overflow:hidden;}
+.tg-table-scroll{overflow-x:auto;}
+.tg-table{width:100%;border-collapse:collapse;min-width:760px;table-layout:fixed;}
+.tg-table th{text-align:left;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;border-bottom:3px solid #000;background:#fff;}
+.tg-table td{padding:14px 16px;border-bottom:3px solid #000;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tg-table tbody tr:last-child td{border-bottom:none;}
+.tg-table tbody tr:hover{background:#dbe1ff;}
+.tg-table th:nth-child(1),.tg-table td:nth-child(1){width:28%;}
+.tg-table th:nth-child(2),.tg-table td:nth-child(2){width:20%;}
+.tg-table th:nth-child(3),.tg-table td:nth-child(3){width:13%;}
+.tg-table th:nth-child(4),.tg-table td:nth-child(4){width:12%;}
+.tg-table th:nth-child(5),.tg-table td:nth-child(5){width:11%;}
+.tg-table th:nth-child(6),.tg-table td:nth-child(6){width:16%;}
+.tg-r,.tg-num{text-align:right;font-family:'JetBrains Mono',monospace;}
+.tg-c,.tg-status{text-align:center;}
+.tg-name-cell{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;}
+.tg-uname{font-family:'JetBrains Mono',monospace;font-size:13px;color:#434655;}
+.tg-date{font-family:'JetBrains Mono',monospace;font-size:12px;color:#434655;}
+.tg-loading{padding:40px;text-align:center;color:#434655;}
+.tg-badge{display:inline-flex;padding:3px 8px;border:2px solid #000;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;}
+.tg-secthead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+.tg-grid{display:grid;gap:16px;grid-template-columns:1fr;}
+.tg-gcard{text-align:left;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:16px;cursor:pointer;transition:all .1s;}
+.tg-gcard:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 0 rgba(0,0,0,1);}
+.tg-gcard-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.tg-gcard-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tg-gcard-sub{font-size:13px;color:#434655;margin:8px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tg-count{background:#fed01b;color:#574500;border:2px solid #000;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+.tg-empty{grid-column:1/-1;background:#fff;border:3px solid #000;padding:32px;text-align:center;color:#434655;font-size:14px;}
+.tg-msg{margin-bottom:16px;padding:12px 14px;border:3px solid #000;font-size:14px;}
+.tg-msg-ok{background:#dbe1ff;color:#003ea8;}
+.tg-msg-err{background:#ffdad6;color:#93000a;}
+.tg-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:70;padding:16px;}
+.tg-modal.hidden{display:none !important;}
+.tg-modal-box{background:#fff;color:#1b1b1b;border:3px solid #000;box-shadow:8px 8px 0 0 rgba(0,0,0,1);padding:24px;width:100%;font-family:'Archivo Narrow','Work Sans',sans-serif;}
+.tg-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.tg-x{background:none;border:none;font-size:26px;line-height:1;cursor:pointer;color:#1b1b1b;}
+.tg-form{display:flex;flex-direction:column;gap:12px;}
+.tg-label{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:#434655;margin-bottom:4px;}
+.tg-btnrow{display:flex;gap:8px;flex-wrap:wrap;}
+.tg-wrap input[type=text],.tg-modal-box input[type=text]{width:100%;background:#fff;border:3px solid #000;border-radius:0;color:#1b1b1b;padding:10px 14px;font-family:'Archivo Narrow',sans-serif;font-size:15px;}
+.tg-wrap input[type=text]:focus,.tg-modal-box input[type=text]:focus{outline:none;box-shadow:3px 3px 0 0 rgba(0,0,0,1);}
+.tg-listbox{max-height:18rem;overflow-y:auto;border:3px solid #000;background:#f3f3f3;padding:12px;}
+.tg-mrow{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:14px;cursor:pointer;}
+.tg-cb{width:16px;height:16px;}
+.tg-mname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1b1b1b;}
+.tg-muname{font-family:'JetBrains Mono',monospace;font-size:12px;color:#434655;}
+.dark .tg-wrap{background:#0A0E18;color:#E6E9F2;}
+.dark .tg-title,.dark .tg-h3,.dark .tg-h4,.dark .tg-name-cell,.dark .tg-mname{color:#E6E9F2;}
+.dark .tg-sub,.dark .tg-scard-label,.dark .tg-uname,.dark .tg-date,.dark .tg-muname,.dark .tg-loading,.dark .tg-label{color:#9AA3B8;}
+.dark .tg-btn{box-shadow:4px 4px 0 0 #33406B;}
+.dark .tg-btn-sm{box-shadow:3px 3px 0 0 #33406B;}
+.dark .tg-scard{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .tg-scard-hi{background:#1B2340;}
+.dark .tg-scard-hi .tg-scard-label{color:#B4C5FF;}
+.dark .tg-tabs{border-color:#33406B;}
+.dark .tg-tab{color:#9AA3B8;}
+.dark .tg-tab:hover{background:#1B2340;color:#E6E9F2;}
+.dark .tg-seg{background:#13192A;color:#E6E9F2;border-color:#33406B;}
+.dark .tg-seg:hover{background:#1B2340;}
+.dark .tg-panel{background:#13192A;border-color:#33406B;box-shadow:8px 8px 0 0 #33406B;}
+.dark .tg-table th{background:#13192A;border-color:#33406B;color:#E6E9F2;}
+.dark .tg-table td{border-color:#33406B;}
+.dark .tg-table tbody tr:hover{background:#1B2340;}
+.dark .tg-gcard{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .tg-gcard:hover{box-shadow:6px 6px 0 0 #33406B;}
+.dark .tg-empty{background:#13192A;border-color:#33406B;color:#9AA3B8;}
+.dark .tg-dd{background:#13192A;border-color:#33406B;box-shadow:8px 8px 0 0 #33406B;}
+.dark .tg-dd button{background:#13192A;color:#E6E9F2;border-color:#33406B;}
+.dark .tg-dd button:hover{background:#2563EB;color:#fff;}
+.dark .tg-modal-box{background:#13192A;color:#E6E9F2;border-color:#33406B;box-shadow:8px 8px 0 0 #33406B;}
+.dark .tg-x{color:#E6E9F2;}
+.dark .tg-wrap input[type=text],.dark .tg-modal-box input[type=text]{background:#0F1420;color:#E6E9F2;border-color:#33406B;}
+.dark .tg-wrap input[type=text]:focus,.dark .tg-modal-box input[type=text]:focus{box-shadow:3px 3px 0 0 #33406B;}
+.dark .tg-listbox{background:#0F1420;border-color:#33406B;}
+@media (min-width:768px){
+ .tg-wrap{padding:40px;}
+ .tg-cards{grid-template-columns:repeat(3,1fr);}
+ .tg-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (min-width:1024px){
+ .tg-cards{grid-template-columns:repeat(6,1fr);}
+ .tg-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+
+<div class="tg-wrap">
+  <header class="tg-head">
+    <div>
+      <h1 class="tg-title">Targets</h1>
+      <p class="tg-sub">Kelola semua target Telegram, folder, dan koleksi manual.</p>
+    </div>
+    <div class="tg-ddwrap" id="sync-ddwrap">
+      <button class="tg-btn" onclick="toggleSyncDd(event)"><span class="material-symbols-outlined">sync</span><span>Sync</span><span class="material-symbols-outlined">arrow_drop_down</span></button>
+      <div class="tg-dd" id="sync-dd">
+        <button onclick="syncTargets(this)">Sync Chats</button>
+        <button onclick="syncFolders(this)">Sync Folders</button>
+        <button onclick="syncAll(this)">Sync All</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="sync-result" class="hidden tg-msg"></div>
+
+  <div class="tg-cards">
+    <div class="tg-scard"><span class="tg-scard-label">Total Targets</span><span class="tg-scard-val" id="sum-targets">0</span></div>
+    <div class="tg-scard"><span class="tg-scard-label">Total Groups</span><span class="tg-scard-val" id="sum-groups">0</span></div>
+    <div class="tg-scard"><span class="tg-scard-label">Total Channels</span><span class="tg-scard-val" id="sum-channels">0</span></div>
+    <div class="tg-scard"><span class="tg-scard-label">Folders</span><span class="tg-scard-val" id="sum-folders">0</span></div>
+    <div class="tg-scard"><span class="tg-scard-label">Collections</span><span class="tg-scard-val" id="sum-collections">0</span></div>
+    <div class="tg-scard tg-scard-hi"><span class="tg-scard-label">Can Send</span><span class="tg-scard-val" id="sum-cansend">0</span></div>
+  </div>
+
+  <div class="tg-tabs">
+    <button class="tg-tab active" id="tab-btn-all" onclick="switchTab('all')">All Targets</button>
+    <button class="tg-tab" id="tab-btn-folders" onclick="switchTab('folders')">Telegram Folders</button>
+    <button class="tg-tab" id="tab-btn-collections" onclick="switchTab('collections')">Manual Collections</button>
+  </div>
+
+  <div id="tab-all">
+    <div class="tg-searchbar">
+      <span class="material-symbols-outlined">search</span>
+      <input type="text" id="t-search" oninput="renderTargets()" placeholder="Cari nama / username...">
+    </div>
+    <div class="tg-seg-wrap" id="type-filters"></div>
+    <div class="tg-panel">
+      <div class="tg-table-scroll">
+        <table class="tg-table">
+          <thead><tr><th>Nama</th><th>Username</th><th>Tipe</th><th class="tg-r">Members</th><th class="tg-c">Status</th><th>Last Sync</th></tr></thead>
+          <tbody id="target-rows"><tr><td colspan="6" class="tg-loading">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-folders" class="hidden">
+    <div class="tg-secthead">
+      <div><h3 class="tg-h3">Telegram Folders</h3><p class="tg-sub">Mirror folder dari akun Telegram. Read-only — atur folder dari aplikasi Telegram.</p></div>
+      <button onclick="syncFolders(this)" class="tg-btn">Sync Folders</button>
+    </div>
+    <div id="folder-result" class="hidden tg-msg"></div>
+    <div id="folder-list" class="tg-grid"><p class="tg-sub">Memuat...</p></div>
+  </div>
+
+  <div id="tab-collections" class="hidden">
+    <div class="tg-secthead">
+      <div><h3 class="tg-h3">Manual Collections</h3><p class="tg-sub">Pengelompokan target buatan aplikasi. Tambah/hapus target manual.</p></div>
+      <button onclick="openNewCollection()" class="tg-btn">+ New Collection</button>
+    </div>
+    <div id="collection-list" class="tg-grid"><p class="tg-sub">Memuat...</p></div>
+  </div>
+</div>
+
+<div id="folder-modal" class="hidden tg-modal">
+  <div class="tg-modal-box" style="max-width:28rem;max-height:90vh;overflow-y:auto;">
+    <div class="tg-modal-head"><h3 id="folder-title" class="tg-h3">Folder</h3><button onclick="closeFolder()" class="tg-x">&times;</button></div>
+    <p class="tg-sub" style="margin-bottom:12px;">Read-only. Atur isi folder dari aplikasi Telegram.</p>
+    <div id="folder-members" class="tg-listbox"></div>
+  </div>
+</div>
+
+<div id="newcoll-modal" class="hidden tg-modal">
+  <div class="tg-modal-box" style="max-width:28rem;">
+    <div class="tg-modal-head"><h3 class="tg-h3">New Collection</h3><button onclick="closeNewCollection()" class="tg-x">&times;</button></div>
+    <div id="newcoll-result" class="hidden tg-msg"></div>
+    <form id="newcoll-form" class="tg-form">
+      <div><label class="tg-label">Nama Collection</label><input type="text" id="nc-name" required placeholder="Marketplace"></div>
+      <div><label class="tg-label">Deskripsi (opsional)</label><input type="text" id="nc-desc"></div>
+      <button type="submit" class="tg-btn tg-btn-full">Buat</button>
+    </form>
+  </div>
+</div>
+
+<div id="coll-modal" class="hidden tg-modal">
+  <div class="tg-modal-box" style="max-width:32rem;max-height:92vh;overflow-y:auto;">
+    <div class="tg-modal-head"><h3 id="coll-title" class="tg-h3">Collection</h3><button onclick="closeCollection()" class="tg-x">&times;</button></div>
+    <input type="hidden" id="coll-id">
+    <div id="coll-result" class="hidden tg-msg"></div>
+    <div class="tg-form" style="margin-bottom:16px;">
+      <div><label class="tg-label">Name</label><input type="text" id="coll-name"></div>
+      <div><label class="tg-label">Description</label><input type="text" id="coll-desc"></div>
+      <div class="tg-btnrow">
+        <button onclick="saveCollection()" class="tg-btn tg-btn-sm">Simpan Detail</button>
+        <button onclick="deleteCollection()" class="tg-btn tg-btn-sm tg-btn-danger">Hapus Collection</button>
+      </div>
+    </div>
+    <div class="tg-secthead" style="margin-bottom:8px;">
+      <h4 class="tg-h4">Members (<span id="coll-count">0</span>)</h4>
+      <div class="tg-btnrow">
+        <button onclick="openAddTarget()" class="tg-btn tg-btn-sm">+ Add Target</button>
+        <button onclick="removeSelected()" class="tg-btn tg-btn-sm tg-btn-danger">Remove Selected</button>
+      </div>
+    </div>
+    <input type="text" id="cm-search" oninput="renderCollMembers()" placeholder="Search members..." style="margin-bottom:8px;">
+    <div id="coll-members" class="tg-listbox"></div>
+  </div>
+</div>
+
+<div id="addtarget-modal" class="hidden tg-modal">
+  <div class="tg-modal-box" style="max-width:28rem;max-height:90vh;overflow-y:auto;">
+    <div class="tg-modal-head"><h3 class="tg-h3">Add Target</h3><button onclick="closeAddTarget()" class="tg-x">&times;</button></div>
+    <input type="text" id="at-search" oninput="renderAddTargets()" placeholder="Cari target..." style="margin-bottom:8px;">
+    <div class="tg-seg-wrap" id="at-filters" style="margin-bottom:12px;"></div>
+    <div id="at-list" class="tg-listbox" style="margin-bottom:16px;"></div>
+    <button onclick="addTargets()" class="tg-btn tg-btn-full">Add</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var TARGETS = [];
+var FOLDERS = [];
+var COLLECTIONS = [];
+var TYPEF = '';
+var ATYPEF = '';
+var CUR_MEMBERS = [];
+var TYPES = ['', 'group', 'supergroup', 'channel', 'private', 'bot'];
+var TYPE_LABEL = { '': 'Semua', group: 'Group', supergroup: 'Supergroup', channel: 'Channel', private: 'Private', bot: 'Bot' };
+
+function toggleSyncDd(e) {
+    if (e) { e.stopPropagation(); }
+    var d = document.getElementById('sync-dd');
+    if (d) { d.classList.toggle('open'); }
+}
+function closeSyncDd() {
+    var d = document.getElementById('sync-dd');
+    if (d) { d.classList.remove('open'); }
+}
+document.addEventListener('click', function (e) {
+    var w = document.getElementById('sync-ddwrap');
+    var d = document.getElementById('sync-dd');
+    if (d && w && !w.contains(e.target)) { d.classList.remove('open'); }
+});
+
+function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function setTxt(id, v) { var el = document.getElementById(id); if (el) el.textContent = (v || 0).toLocaleString('id-ID'); }
+function fmtDate(v) {
+    if (!v) return '-';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    return d.toLocaleString('id-ID');
+}
+
+function switchTab(name) {
+    var tabs = ['all', 'folders', 'collections'];
+    for (var i = 0; i < tabs.length; i++) {
+        var t = tabs[i];
+        var pane = document.getElementById('tab-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (pane) { if (t === name) { pane.classList.remove('hidden'); } else { pane.classList.add('hidden'); } }
+        if (btn) { if (t === name) { btn.classList.add('active'); } else { btn.classList.remove('active'); } }
+    }
+    if (location.hash !== '#' + name) { history.replaceState(null, '', '#' + name); }
+}
+
+function typeBadge(t) {
+    var map = { channel: ['#ffdbcd', '#7d2d00'], supergroup: ['#ffe083', '#574500'], group: ['#dbe1ff', '#003ea8'], private: ['#ffe083', '#574500'], bot: ['#e2e2e2', '#434655'] };
+    var c = map[t] || ['#e2e2e2', '#434655'];
+    return '<span class="tg-badge" style="background:' + c[0] + ';color:' + c[1] + ';">' + esc(TYPE_LABEL[t] || t) + '</span>';
+}
+
+function renderFilters() {
+    var box = document.getElementById('type-filters');
+    var html = '';
+    for (var i = 0; i < TYPES.length; i++) {
+        var t = TYPES[i];
+        var cls = (t === TYPEF) ? 'tg-seg active' : 'tg-seg';
+        html += '<button onclick="setFilter(\'' + t + '\')" class="' + cls + '">' + esc(TYPE_LABEL[t]) + '</button>';
+    }
+    box.innerHTML = html;
+}
+function setFilter(t) { TYPEF = t; renderFilters(); renderTargets(); }
+
+function renderTargets() {
+    var box = document.getElementById('target-rows');
+    var q = (document.getElementById('t-search').value || '').toLowerCase();
+    var list = TARGETS.filter(function (g) {
+        if (TYPEF && g.type !== TYPEF) return false;
+        if (!q) return true;
+        var hay = ((g.title || '') + ' ' + (g.username || '')).toLowerCase();
+        return hay.indexOf(q) >= 0;
+    });
+    if (!list.length) {
+        box.innerHTML = '<tr><td colspan="6" class="tg-loading">Tidak ada target. Klik Sync untuk mengambil dari Telegram.</td></tr>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var g = list[i];
+        var uname = g.username ? ('@' + g.username) : '-';
+        var st = g.can_send
+            ? '<span class="material-symbols-outlined" style="color:#004ac6;" title="Bisa Kirim">check_circle</span>'
+            : '<span class="material-symbols-outlined" style="color:#ba1a1a;" title="Tidak Bisa Kirim">cancel</span>';
+        html += '<tr>'
+            + '<td class="tg-name-cell">' + esc(g.title) + '</td>'
+            + '<td class="tg-uname">' + esc(uname) + '</td>'
+            + '<td>' + typeBadge(g.type) + '</td>'
+            + '<td class="tg-num">' + (g.member_count || 0) + '</td>'
+            + '<td class="tg-status">' + st + '</td>'
+            + '<td class="tg-date">' + esc(fmtDate(g.last_synced_at)) + '</td>'
+            + '</tr>';
+    }
+    box.innerHTML = html;
+}
+
+function renderFolders() {
+    var box = document.getElementById('folder-list');
+    if (!FOLDERS.length) {
+        box.innerHTML = '<div class="tg-empty">Belum ada folder. Klik Sync Folders untuk mengambil dari Telegram.</div>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < FOLDERS.length; i++) {
+        var f = FOLDERS[i];
+        var nm = f.name || f.title || ('Folder ' + f.folder_id);
+        html += '<button onclick="openFolder(' + f.id + ')" class="tg-gcard">'
+            + '<div class="tg-gcard-top"><span class="tg-gcard-name">' + esc(nm) + '</span><span class="tg-count">' + (f.count || 0) + '</span></div>'
+            + '<p class="tg-gcard-sub">Last sync: ' + esc(fmtDate(f.last_synced_at)) + '</p>'
+            + '</button>';
+    }
+    box.innerHTML = html;
+}
+
+async function openFolder(id) {
+    var f = null;
+    for (var i = 0; i < FOLDERS.length; i++) { if (FOLDERS[i].id === id) { f = FOLDERS[i]; break; } }
+    document.getElementById('folder-title').textContent = f ? (f.name || f.title || 'Folder') : 'Folder';
+    var box = document.getElementById('folder-members');
+    box.innerHTML = '<p class="tg-sub">Memuat...</p>';
+    document.getElementById('folder-modal').classList.remove('hidden');
+    try {
+        var res = await fetch('/api/folders/' + id + '/members', { credentials: 'same-origin' });
+        var list = res.ok ? await res.json() : [];
+        if (!list.length) { box.innerHTML = '<p class="tg-sub">Folder kosong atau target belum ter-sync.</p>'; return; }
+        var html = '';
+        for (var j = 0; j < list.length; j++) {
+            var g = list[j];
+            var uname = g.username ? ('@' + g.username) : '';
+            html += '<div class="tg-mrow"><span class="tg-mname">' + esc(g.title) + ' <span class="tg-muname">' + esc(uname) + '</span></span>' + typeBadge(g.type) + '</div>';
+        }
+        box.innerHTML = html;
+    } catch (e) { box.innerHTML = '<p class="tg-sub" style="color:#93000a;">Gagal memuat member folder.</p>'; }
+}
+function closeFolder() { document.getElementById('folder-modal').classList.add('hidden'); }
+
+async function syncFolders(btn) {
+    closeSyncDd();
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = 'Syncing...';
+    var result = document.getElementById('folder-result');
+    result.classList.add('hidden');
+    try {
+        var res = await fetch('/api/folders/sync', { method: 'POST' });
+        var data = await res.json();
+        result.classList.remove('hidden');
+        if (res.ok) {
+            result.className = 'tg-msg tg-msg-ok';
+            result.textContent = data.message || 'Sync folder selesai';
+            loadAll();
+        } else {
+            result.className = 'tg-msg tg-msg-err';
+            result.textContent = data.detail || 'Gagal sync folder';
+        }
+    } catch (err) {
+        result.classList.remove('hidden');
+        result.className = 'tg-msg tg-msg-err';
+        result.textContent = 'Koneksi error';
+    }
+    btn.disabled = false;
+    btn.textContent = old;
+}
+
+function renderCollections() {
+    var box = document.getElementById('collection-list');
+    if (!COLLECTIONS.length) {
+        box.innerHTML = '<div class="tg-empty">Belum ada collection. Klik + New Collection.</div>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < COLLECTIONS.length; i++) {
+        var c = COLLECTIONS[i];
+        html += '<button onclick="openCollection(' + c.id + ')" class="tg-gcard">'
+            + '<div class="tg-gcard-top"><span class="tg-gcard-name">' + esc(c.name) + '</span><span class="tg-count">' + (c.count || 0) + '</span></div>'
+            + '<p class="tg-gcard-sub">' + esc(c.description || '') + '</p>'
+            + '</button>';
+    }
+    box.innerHTML = html;
+}
+
+function openNewCollection() {
+    document.getElementById('nc-name').value = '';
+    document.getElementById('nc-desc').value = '';
+    document.getElementById('newcoll-result').classList.add('hidden');
+    document.getElementById('newcoll-modal').classList.remove('hidden');
+}
+function closeNewCollection() { document.getElementById('newcoll-modal').classList.add('hidden'); }
+
+document.getElementById('newcoll-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var r = document.getElementById('newcoll-result');
+    var body = { name: document.getElementById('nc-name').value, description: document.getElementById('nc-desc').value || null };
+    try {
+        var res = await fetch('/api/collections/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var data = await res.json();
+        if (res.ok) { closeNewCollection(); loadAll(); }
+        else { r.classList.remove('hidden'); r.className = 'tg-msg tg-msg-err'; r.textContent = data.detail || 'Gagal'; }
+    } catch (err) { r.classList.remove('hidden'); r.className = 'tg-msg tg-msg-err'; r.textContent = 'Koneksi error'; }
+});
+
+async function openCollection(id) {
+    var c = null;
+    for (var i = 0; i < COLLECTIONS.length; i++) { if (COLLECTIONS[i].id === id) { c = COLLECTIONS[i]; break; } }
+    document.getElementById('coll-id').value = id;
+    document.getElementById('coll-title').textContent = c ? c.name : 'Collection';
+    document.getElementById('coll-name').value = c ? c.name : '';
+    document.getElementById('coll-desc').value = c ? (c.description || '') : '';
+    document.getElementById('coll-result').classList.add('hidden');
+    document.getElementById('cm-search').value = '';
+    document.getElementById('coll-modal').classList.remove('hidden');
+    await loadCollMembers(id);
+}
+function closeCollection() { document.getElementById('coll-modal').classList.add('hidden'); }
+
+async function loadCollMembers(id) {
+    var box = document.getElementById('coll-members');
+    box.innerHTML = '<p class="tg-sub">Memuat...</p>';
+    try {
+        var res = await fetch('/api/collections/' + id + '/members', { credentials: 'same-origin' });
+        CUR_MEMBERS = res.ok ? await res.json() : [];
+    } catch (e) { CUR_MEMBERS = []; }
+    document.getElementById('coll-count').textContent = CUR_MEMBERS.length;
+    renderCollMembers();
+}
+
+function renderCollMembers() {
+    var box = document.getElementById('coll-members');
+    var q = (document.getElementById('cm-search').value || '').toLowerCase();
+    var list = CUR_MEMBERS.filter(function (g) {
+        if (!q) return true;
+        return ((g.title || '') + ' ' + (g.username || '')).toLowerCase().indexOf(q) >= 0;
+    });
+    if (!list.length) { box.innerHTML = '<p class="tg-sub">Belum ada member. Klik + Add Target.</p>'; return; }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var g = list[i];
+        var uname = g.username ? ('@' + g.username) : '';
+        html += '<label class="tg-mrow">'
+            + '<input type="checkbox" class="cm-cb tg-cb" value="' + g.id + '">'
+            + '<span class="tg-mname">' + esc(g.title) + ' <span class="tg-muname">' + esc(uname) + '</span></span>'
+            + typeBadge(g.type) + '</label>';
+    }
+    box.innerHTML = html;
+}
+
+async function saveCollection() {
+    var id = document.getElementById('coll-id').value;
+    var r = document.getElementById('coll-result');
+    var body = { name: document.getElementById('coll-name').value, description: document.getElementById('coll-desc').value || null };
+    try {
+        var res = await fetch('/api/collections/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var data = await res.json();
+        r.classList.remove('hidden');
+        if (res.ok) { r.className = 'tg-msg tg-msg-ok'; r.textContent = 'Tersimpan'; loadAll(); }
+        else { r.className = 'tg-msg tg-msg-err'; r.textContent = data.detail || 'Gagal'; }
+    } catch (err) { r.classList.remove('hidden'); r.className = 'tg-msg tg-msg-err'; r.textContent = 'Koneksi error'; }
+}
+
+async function deleteCollection() {
+    var id = document.getElementById('coll-id').value;
+    if (!confirm('Hapus collection ini?')) return;
+    await fetch('/api/collections/' + id, { method: 'DELETE' });
+    closeCollection();
+    loadAll();
+}
+
+async function removeSelected() {
+    var id = document.getElementById('coll-id').value;
+    var checks = document.querySelectorAll('.cm-cb:checked');
+    var ids = [];
+    for (var i = 0; i < checks.length; i++) { ids.push(parseInt(checks[i].value)); }
+    if (!ids.length) { alert('Pilih member yang ingin dihapus'); return; }
+    await fetch('/api/collections/' + id + '/members/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_ids: ids }) });
+    await loadCollMembers(id);
+    loadAll();
+}
+
+function openAddTarget() {
+    ATYPEF = '';
+    document.getElementById('at-search').value = '';
+    renderAddFilters();
+    renderAddTargets();
+    document.getElementById('addtarget-modal').classList.remove('hidden');
+}
+function closeAddTarget() { document.getElementById('addtarget-modal').classList.add('hidden'); }
+
+function renderAddFilters() {
+    var box = document.getElementById('at-filters');
+    var html = '';
+    for (var i = 0; i < TYPES.length; i++) {
+        var t = TYPES[i];
+        var cls = (t === ATYPEF) ? 'tg-seg active' : 'tg-seg';
+        html += '<button onclick="setAddFilter(\'' + t + '\')" class="' + cls + '">' + esc(TYPE_LABEL[t]) + '</button>';
+    }
+    box.innerHTML = html;
+}
+function setAddFilter(t) { ATYPEF = t; renderAddFilters(); renderAddTargets(); }
+
+function renderAddTargets() {
+    var box = document.getElementById('at-list');
+    var q = (document.getElementById('at-search').value || '').toLowerCase();
+    var existing = {};
+    for (var m = 0; m < CUR_MEMBERS.length; m++) { existing[CUR_MEMBERS[m].id] = true; }
+    var list = TARGETS.filter(function (g) {
+        if (existing[g.id]) return false;
+        if (ATYPEF && g.type !== ATYPEF) return false;
+        if (!q) return true;
+        return ((g.title || '') + ' ' + (g.username || '')).toLowerCase().indexOf(q) >= 0;
+    });
+    if (!list.length) { box.innerHTML = '<p class="tg-sub">Tidak ada target tersedia.</p>'; return; }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var g = list[i];
+        var uname = g.username ? ('@' + g.username) : '';
+        html += '<label class="tg-mrow">'
+            + '<input type="checkbox" class="at-cb tg-cb" value="' + g.id + '">'
+            + '<span class="tg-mname">' + esc(g.title) + ' <span class="tg-muname">' + esc(uname) + '</span></span>'
+            + typeBadge(g.type) + '</label>';
+    }
+    box.innerHTML = html;
+}
+
+async function addTargets() {
+    var id = document.getElementById('coll-id').value;
+    var checks = document.querySelectorAll('.at-cb:checked');
+    var ids = [];
+    for (var i = 0; i < checks.length; i++) { ids.push(parseInt(checks[i].value)); }
+    if (!ids.length) { alert('Pilih minimal satu target'); return; }
+    await fetch('/api/collections/' + id + '/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target_ids: ids }) });
+    closeAddTarget();
+    await loadCollMembers(id);
+    loadAll();
+}
+
+async function syncTargets(btn) {
+    closeSyncDd();
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = 'Syncing...';
+    var result = document.getElementById('sync-result');
+    result.classList.add('hidden');
+    try {
+        var res = await fetch('/api/groups/sync', { method: 'POST' });
+        var data = await res.json();
+        result.classList.remove('hidden');
+        if (res.ok) {
+            result.className = 'tg-msg tg-msg-ok';
+            result.textContent = data.message;
+            loadAll();
+        } else {
+            result.className = 'tg-msg tg-msg-err';
+            result.textContent = data.detail || 'Gagal sync';
+        }
+    } catch (err) {
+        result.classList.remove('hidden');
+        result.className = 'tg-msg tg-msg-err';
+        result.textContent = 'Koneksi error';
+    }
+    btn.disabled = false;
+    btn.textContent = old;
+}
+
+async function syncAll(btn) {
+    closeSyncDd();
+    await syncTargets(btn);
+    await syncFolders(btn);
+}
+
+async function loadAll() {
+    try {
+        var res = await Promise.all([
+            fetch('/api/groups/', { credentials: 'same-origin' }),
+            fetch('/api/folders/', { credentials: 'same-origin' }),
+            fetch('/api/collections/', { credentials: 'same-origin' })
+        ]);
+        TARGETS = res[0].ok ? await res[0].json() : [];
+        FOLDERS = res[1].ok ? await res[1].json() : [];
+        COLLECTIONS = res[2].ok ? await res[2].json() : [];
+        var groups = 0, channels = 0, cansend = 0;
+        for (var i = 0; i < TARGETS.length; i++) {
+            var t = TARGETS[i];
+            if (t.type === 'group' || t.type === 'supergroup') groups++;
+            else if (t.type === 'channel') channels++;
+            if (t.can_send) cansend++;
+        }
+        setTxt('sum-targets', TARGETS.length);
+        setTxt('sum-groups', groups);
+        setTxt('sum-channels', channels);
+        setTxt('sum-folders', FOLDERS.length);
+        setTxt('sum-collections', COLLECTIONS.length);
+        setTxt('sum-cansend', cansend);
+        renderFilters();
+        renderTargets();
+        renderFolders();
+        renderCollections();
+    } catch (e) { console.error(e); }
+}
+
+(function () {
+    var h = (location.hash || '').replace('#', '');
+    if (h === 'folders' || h === 'collections') { switchTab(h); }
+    loadAll();
+})();
+</script>
+{% endblock %}

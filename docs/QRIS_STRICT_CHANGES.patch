@@ -1,0 +1,150 @@
+# Full patch for Strict Full-Numeric Dynamic QRIS
+# Apply with: patch -p1 < docs/QRIS_STRICT_CHANGES.patch
+# Then: python -m compileall -q . && restart worker
+
+diff --git a/worker/qris_gen.py b/worker/qris_gen.py
+index abc1234..def5678 100644
+--- a/worker/qris_gen.py
++++ b/worker/qris_gen.py
+@@ -22,24 +22,20 @@ def _crc16(payload: str) -> str:
+ 
+ 
+-def parse_amount(text: str, allow_short: bool = True) -> int:
+-    """'5000' / '5k' / '5K' / '10k' / '25.000' / '25,000' / '25rb' / '1jt' -> int rupiah.
+-
+-    allow_short=False menonaktifkan format singkat (k/rb/jt/juta/m); hanya angka
+-    penuh seperti 5000 atau 25.000 yang diterima.
+-    """
+-    t = (text or "").strip().lower().replace(" ", "").replace("rp", "")
+-    if not t:
+-        raise ValueError("Nominal kosong")
+-    mult = 1
+-    matched_short = False
+-    for suf, m in (("juta", 1_000_000), ("jt", 1_000_000), ("m", 1_000_000),
+-                   ("ribu", 1000), ("rb", 1000), ("k", 1000)):
+-        if t.endswith(suf):
+-            mult = m
+-            t = t[: -len(suf)]
+-            matched_short = True
+-            break
+-    if matched_short and not allow_short:
+-        raise ValueError("Format singkat (5k/25rb) dinonaktifkan. Pakai angka penuh, mis. /qris 5000")
+-    t = t.replace(".", "").replace(",", "")
+-    if not t.isdigit():
+-        raise ValueError(f"Nominal tidak valid: {text}")
+-    return int(t) * mult
++def parse_amount(text: str, allow_short: bool = False) -> int:
++    """STRICT: hanya menerima string digit murni (angka penuh).
++
++    Diterima: '10000', '25000', '50000', 10000 (int)
++    Ditolak: '5k', '5K', '10rb', '25.000', '25,000', 'Rp10000', 'abc'
++
++    allow_short param diabaikan (untuk kompatibilitas backward call site).
++    """
++    t = str(text or "").strip()
++    if not t.isdigit():
++        raise ValueError("Format nominal tidak valid. Gunakan angka penuh, contoh: /qris 10000")
++    amount_int = int(t)
++    if amount_int <= 0:
++        raise ValueError("Nominal harus lebih dari 0")
++    return amount_int
+ 
+ 
+@@ -92,20 +88,22 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
+-    """Bangun payload QRIS dinamis dari payload statis + nominal.
+-
+-    `amount` boleh int, float, atau string. String akan dinormalisasi lewat
+-    parse_amount sehingga '5000', '5k', '5K', '10rb', '25.000', '25,000' semua
+-    valid. JANGAN pernah memanggil int(amount) langsung -> gagal untuk '5K'.
+-    """
++    """Bangun payload QRIS dinamis dari payload statis + nominal (STRICT mode).
++
++    amount: int/float/str digit murni saja.
++    Semua normalisasi WAJIB lewat parse_amount() -- tidak ada int() mentah sebelum isdigit validation.
++    Short format otomatis ditolak.
++    """
+     base = (base_payload or "").strip().replace("\n", "").replace(" ", "")
+     if not base:
+         raise ValueError("Base QRIS payload belum diatur")
+ 
+-    # ── Normalisasi amount (lapisan pertahanan terakhir) ──
++    # ── Normalisasi amount (strict parse_amount only, rule #4 & #6) ──
+     if isinstance(amount, bool):
+-        raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
+-    if isinstance(amount, (int, float)):
+-        amount_int = int(amount)
+-    else:
+-        try:
+-            amount_int = parse_amount(str(amount))
+-        except Exception:
+-            raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
++        raise ValueError("Format nominal tidak valid. Gunakan angka penuh, contoh: /qris 10000")
++    try:
++        amount_int = parse_amount(amount)  # selalu lewat sini, validasi digit dulu
++    except ValueError as ve:
++        raise ve
++    except Exception:
++        raise ValueError("Format nominal tidak valid. Gunakan angka penuh, contoh: /qris 10000")
++
+     if amount_int <= 0:
+         raise ValueError("Nominal harus lebih dari 0")
+ 
+ diff --git a/worker/command_handler.py b/worker/command_handler.py
+index 9876543..3210cba 100644
+--- a/worker/command_handler.py
++++ b/worker/command_handler.py
+@@ -11,8 +11,8 @@ Command di-scope PER-AKUN: handler menerima account_id worker sehingga hanya
+ Command milik akun tersebut yang dieksekusi, dan log dicatat atas nama akun itu.
+ 
+ Dynamic Payload Rules (Settings) menentukan perilaku QRIS:
+-- qris_dynamic_amount: bila "0", QRIS dikirim statis (nominal diabaikan).
+-- qris_support_short: bila "0", format singkat 5k/25rb/1jt ditolak.
++- qris_dynamic_amount: bila "0", QRIS dikirim statis (nominal diabaikan).
++- qris_support_short: setting ini sudah deprecated (strict mode di-enforce di qris_gen.py).
+ """
+ 
+@@ -170,12 +170,11 @@ async def _execute(client, message, msg, arg, db):
+         from worker.qris_gen import build_dynamic_qris, generate_qris_image, parse_amount
+         base = msg.qris_payload if msg.qris_payload else _get_setting(db, "qris_base_payload", "")
+         dynamic_on = _get_setting(db, "qris_dynamic_amount", "1") != "0"
+-        allow_short = _get_setting(db, "qris_support_short", "1") != "0"
+         amount = 0
+         try:
+             if not base:
+                 raise ValueError("Base QRIS payload belum diatur (set payload di command)")
+             if dynamic_on:
+                 try:
+-                    amount = parse_amount(arg, allow_short=allow_short)
++                    amount = parse_amount(arg)  # strict only
+                 except ValueError as ve:
+                     raise ValueError(str(ve))
+                 except Exception:
+-                    raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
++                    raise ValueError("Format nominal tidak valid. Gunakan angka penuh, contoh: /qris 10000")
+                 payload = build_dynamic_qris(base, amount)
+             else:
+                 payload = base
+@@ -199,7 +198,7 @@ async def _execute(client, message, msg, arg, db):
+         except ValueError as e:
+             try:
+-                await message.edit_text(f"Warning: {e}")
++                await message.edit_text(f"⚠️ {e}")
+             except Exception:
+                 try:
+                     await client.send_message(chat_id, f"⚠️ {e}")
+ 
+ diff --git a/schemas.py b/schemas.py
+index fedcba9..9876543 100644
+--- a/schemas.py
++++ b/schemas.py
+@@ -409,7 +409,6 @@ class AppSettingUpdate(BaseModel):  # contoh nama class, sesuaikan
+     qris_base_payload: Optional[str] = None
+     app_name: Optional[str] = None
+     accent_color: Optional[str] = None
+     default_language: Optional[str] = None
+     qris_dynamic_amount: Optional[bool] = None
+-    qris_support_short: Optional[bool] = None   # HAPUS: toggle sudah tidak ada di UI
+ 
+ 
+ # UI note: Di templates/settings.html hapus elemen toggle untuk qris_support_short
+ #          dan update semua placeholder input nominal contoh menjadi "/qris 10000"

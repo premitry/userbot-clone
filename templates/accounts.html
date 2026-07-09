@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% block title %}Accounts{% endblock %}
+{% block nav_accounts %}bg-gray-700 text-indigo-400{% endblock %}
+
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Archivo+Narrow:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+.ua-wrap{--ua-primary:#004ac6;--ua-pc:#2563eb;--ua-opc:#eeefff;--ua-ink:#1b1b1b;--ua-var:#434655;--ua-outline:#737686;--ua-surface:#f9f9f9;--ua-white:#ffffff;--ua-sv:#e2e2e2;--ua-scl:#f3f3f3;--ua-err:#ba1a1a;--ua-errc:#ffdad6;--ua-secc:#fed01b;--ua-warn:#eec200;
+  background-color:#f9f9f9;background-image:linear-gradient(rgba(0,74,198,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,74,198,.1) 1px,transparent 1px);background-size:20px 20px;
+  min-height:100vh;padding:24px;color:var(--ua-ink);font-family:'Archivo Narrow',sans-serif;}
+.ua-wrap .material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;vertical-align:middle;}
+.ua-mono{font-family:'JetBrains Mono',monospace;}
+.ua-disp{font-family:'Space Grotesk',sans-serif;}
+
+.ua-header{display:flex;flex-direction:column;gap:16px;margin-bottom:32px;}
+@media(min-width:768px){.ua-header{flex-direction:row;align-items:flex-end;justify-content:space-between;}}
+.ua-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:40px;line-height:1.1;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 8px;}
+.ua-sub{font-size:18px;color:var(--ua-var);max-width:640px;margin:0;}
+.ua-statusbar{display:flex;align-items:center;gap:16px;font-family:'JetBrains Mono',monospace;font-size:14px;border:3px solid var(--ua-ink);background:var(--ua-white);padding:10px 14px;box-shadow:4px 4px 0 0 rgba(0,0,0,1);}
+.ua-statusbar .sep{width:3px;height:16px;background:var(--ua-ink);}
+.ua-statusbar .grp{display:flex;align-items:center;gap:8px;}
+.ua-dot{width:12px;height:12px;border:2px solid var(--ua-ink);display:inline-block;}
+.ua-dot.on{background:var(--ua-primary);}
+.ua-dot.off{background:var(--ua-err);}
+.ua-dot.wait{background:var(--ua-secc);}
+
+.ua-grid{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;}
+@media(min-width:768px){.ua-grid{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1100px){.ua-grid{grid-template-columns:repeat(3,1fr);}}
+
+.ua-card{background:var(--ua-white);border:3px solid var(--ua-ink);box-shadow:8px 8px 0 0 rgba(0,0,0,1);transition:all .2s ease;display:flex;flex-direction:column;position:relative;}
+.ua-card:hover{transform:translate(-2px,-2px);box-shadow:10px 10px 0 0 rgba(0,0,0,1);}
+.ua-card.off{opacity:.8;}
+.ua-card.off:hover{opacity:1;}
+.ua-card.active{border-color:var(--ua-primary);box-shadow:8px 8px 0 0 var(--ua-primary);}
+.ua-card.active:hover{box-shadow:10px 10px 0 0 var(--ua-primary);}
+.ua-activeflag{display:flex;align-items:center;gap:6px;color:var(--ua-primary);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;}
+.ua-badge{position:absolute;top:0;right:0;padding:6px 8px;border-bottom:3px solid var(--ua-ink);border-left:3px solid var(--ua-ink);background:var(--ua-surface);display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.ua-badge.off{color:var(--ua-err);}
+.ua-body{padding:20px;border-bottom:3px solid var(--ua-ink);flex:1;}
+.ua-body.clickable{cursor:pointer;transition:background .12s ease;}
+.ua-body.clickable:hover{background:var(--ua-opc);}
+.ua-idrow{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;}
+.ua-avatar{width:56px;height:56px;border:3px solid var(--ua-ink);background:var(--ua-pc);color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:24px;}
+.ua-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:22px;margin:0;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
+.ua-namesub{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--ua-var);margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
+.ua-stats{margin-top:12px;border-top:3px dashed var(--ua-ink);padding-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px;display:flex;flex-direction:column;gap:6px;}
+.ua-stats .r{display:flex;justify-content:space-between;gap:12px;}
+.ua-stats .r span{color:var(--ua-var);}
+.ua-stats .r b{color:var(--ua-ink);font-weight:700;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
+.ua-stats .r b.err{color:var(--ua-err);}
+.ua-actions{display:flex;background:var(--ua-scl);}
+.ua-act{flex:1;padding:12px 8px;border-right:3px solid var(--ua-ink);background:transparent;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .12s ease;color:var(--ua-ink);}
+.ua-act:last-child{border-right:none;}
+.ua-act:hover{background:var(--ua-pc);color:#fff;}
+.ua-act.start:hover{background:var(--ua-primary);color:#fff;}
+.ua-act.setactive{color:var(--ua-primary);}
+.ua-act.setactive:hover{background:var(--ua-primary);color:#fff;}
+.ua-act.setactive.on{background:var(--ua-primary);color:#fff;cursor:default;}
+.ua-act.danger{flex:0 0 auto;padding:12px 16px;color:var(--ua-err);}
+.ua-act.danger:hover{background:var(--ua-errc);color:var(--ua-err);}
+.ua-act .material-symbols-outlined{font-size:18px;}
+
+.ua-addcard{grid-column:1/-1;background:var(--ua-pc);color:var(--ua-opc);border:3px solid var(--ua-ink);box-shadow:8px 8px 0 0 rgba(0,0,0,1);display:flex;flex-direction:column;margin-top:8px;}
+@media(min-width:768px){.ua-addcard{flex-direction:row;}}
+.ua-addleft{padding:32px;flex:1;border-bottom:3px solid var(--ua-ink);display:flex;flex-direction:column;justify-content:center;}
+@media(min-width:768px){.ua-addleft{border-bottom:none;border-right:3px solid var(--ua-ink);}}
+.ua-addleft .ico{font-size:48px;margin-bottom:8px;}
+.ua-addleft h3{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:32px;line-height:1.05;margin:0 0 8px;}
+.ua-addleft p{font-size:18px;opacity:.9;margin:0;max-width:520px;}
+.ua-addbtns{margin-top:20px;display:flex;flex-wrap:wrap;gap:12px;}
+.ua-btn{border:3px solid var(--ua-ink);box-shadow:4px 4px 0 0 rgba(0,0,0,1);text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;padding:12px 20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .1s ease;}
+.ua-btn:active{transform:translate(4px,4px);box-shadow:none;}
+.ua-btn.solid{background:var(--ua-white);color:var(--ua-ink);}
+.ua-btn.ghost{background:transparent;color:var(--ua-opc);border-color:var(--ua-opc);}
+.ua-btn .material-symbols-outlined{font-size:18px;}
+.ua-addright{width:100%;background:var(--ua-surface);display:flex;align-items:center;justify-content:center;padding:32px;position:relative;overflow:hidden;}
+@media(min-width:768px){.ua-addright{width:360px;flex-shrink:0;}}
+.ua-addright .stripes{position:absolute;inset:0;opacity:.1;background-image:repeating-linear-gradient(45deg,#1b1b1b 25%,transparent 25%,transparent 75%,#1b1b1b 75%,#1b1b1b),repeating-linear-gradient(45deg,#1b1b1b 25%,#f9f9f9 25%,#f9f9f9 75%,#1b1b1b 75%,#1b1b1b);background-position:0 0,10px 10px;background-size:20px 20px;}
+.ua-qrbox{width:100%;max-width:240px;aspect-ratio:1;border:3px solid var(--ua-ink);background:#fff;padding:8px;box-shadow:8px 8px 0 0 rgba(0,0,0,1);position:relative;z-index:1;}
+.ua-qrinner{width:100%;height:100%;border:2px dashed var(--ua-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--ua-surface);}
+.ua-qrinner .material-symbols-outlined{font-size:64px;color:var(--ua-primary);animation:ua-pulse 1.6s ease-in-out infinite;}
+.ua-qrinner .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;margin-top:8px;color:var(--ua-var);}
+.ua-scanline{position:absolute;top:0;left:0;width:100%;height:4px;background:var(--ua-primary);opacity:.7;animation:ua-scan 2s ease-in-out infinite;}
+@keyframes ua-scan{0%{top:0;}50%{top:calc(100% - 4px);}100%{top:0;}}
+@keyframes ua-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+.ua-empty{grid-column:1/-1;border:3px solid var(--ua-ink);background:var(--ua-white);box-shadow:8px 8px 0 0 rgba(0,0,0,1);padding:56px 24px;text-align:center;}
+.ua-empty .material-symbols-outlined{font-size:56px;color:var(--ua-outline);}
+.ua-empty h3{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;margin:12px 0 4px;}
+.ua-empty p{color:var(--ua-var);margin:0;}
+.ua-loading{grid-column:1/-1;border:3px solid var(--ua-ink);background:var(--ua-white);box-shadow:8px 8px 0 0 rgba(0,0,0,1);padding:56px 24px;text-align:center;font-family:'JetBrains Mono',monospace;color:var(--ua-var);}
+
+/* Modals */
+.ua-modal{--ua-primary:#004ac6;--ua-pc:#2563eb;--ua-opc:#eeefff;--ua-ink:#1b1b1b;--ua-var:#434655;--ua-outline:#737686;--ua-surface:#f9f9f9;--ua-white:#ffffff;--ua-sv:#e2e2e2;--ua-scl:#f3f3f3;--ua-err:#ba1a1a;--ua-errc:#ffdad6;--ua-secc:#fed01b;--ua-warn:#eec200;position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
+.ua-modal.hidden{display:none;}
+.ua-modal-box{background:var(--ua-white);border:3px solid var(--ua-ink);box-shadow:8px 8px 0 0 rgba(0,0,0,1);width:100%;max-width:440px;}
+.ua-modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:3px solid var(--ua-ink);background:var(--ua-sv);}
+.ua-modal-head h3{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:20px;margin:0;display:flex;align-items:center;gap:8px;}
+.ua-x{background:none;border:none;cursor:pointer;font-size:24px;line-height:1;color:var(--ua-var);}
+.ua-x:hover{color:var(--ua-ink);}
+.ua-modal-body{padding:20px;}
+.ua-field{margin-bottom:16px;}
+.ua-field label{display:block;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--ua-var);margin-bottom:6px;}
+.ua-input{width:100%;padding:10px 12px;border:3px solid var(--ua-ink);background:var(--ua-white);outline:none;font-family:'Archivo Narrow',sans-serif;font-size:16px;box-sizing:border-box;}
+.ua-input:focus{box-shadow:4px 4px 0 0 var(--ua-pc);}
+.ua-input.otp{text-align:center;font-size:28px;letter-spacing:.4em;font-family:'JetBrains Mono',monospace;}
+.ua-input.mono{font-family:'JetBrains Mono',monospace;font-size:12px;resize:none;}
+.ua-hint{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ua-outline);margin-top:4px;}
+.ua-mbtn{width:100%;border:3px solid var(--ua-ink);box-shadow:4px 4px 0 0 rgba(0,0,0,1);background:var(--ua-pc);color:#fff;text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;padding:12px;cursor:pointer;transition:all .1s ease;}
+.ua-mbtn:active{transform:translate(4px,4px);box-shadow:none;}
+.ua-mbtn.op60{opacity:.6;}
+.ua-result{margin-bottom:16px;padding:12px;border:3px solid var(--ua-ink);font-size:14px;}
+.ua-result.ok{background:#e6f4ea;color:#0b6b2e;}
+.ua-result.err{background:var(--ua-errc);color:var(--ua-err);}
+.ua-center{text-align:center;padding:24px 0;}
+.ua-dots{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 0;}
+.ua-dots .row{display:flex;gap:6px;}
+.ua-dots .row span{width:10px;height:10px;background:var(--ua-pc);border:2px solid var(--ua-ink);animation:ua-bounce .9s infinite;}
+.ua-dots .row span:nth-child(2){animation-delay:.15s;}
+.ua-dots .row span:nth-child(3){animation-delay:.3s;}
+@keyframes ua-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+/* ============ DARK MODE ============ */
+.dark .ua-wrap,.dark .ua-modal{--ua-ink:#33406B;--ua-white:#13192A;--ua-surface:#1B2340;--ua-sv:#1B2340;--ua-scl:#0F1420;--ua-var:#9AA3B8;--ua-outline:#9AA3B8;}
+.dark .ua-wrap{color:#E6E9F2;background-color:#0A0E18;background-image:linear-gradient(rgba(37,99,235,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.08) 1px,transparent 1px);}
+.dark .ua-act{color:#E6E9F2;}
+.dark .ua-act.setactive{color:#7AA2FF;}
+.dark .ua-act.danger{color:#FF6B6B;}
+.dark .ua-stats .r b{color:#E6E9F2;}
+.dark .ua-btn.solid{color:#E6E9F2;}
+.dark .ua-name{color:#E6E9F2;}
+.dark .ua-input{background:#0F1420;color:#E6E9F2;}
+.dark .ua-body.clickable:hover{background:#1B2340;}
+.dark .ua-statusbar,.dark .ua-btn,.dark .ua-mbtn{box-shadow:4px 4px 0 0 #33406B;}
+.dark .ua-card,.dark .ua-addcard,.dark .ua-qrbox,.dark .ua-empty,.dark .ua-loading,.dark .ua-modal-box{box-shadow:8px 8px 0 0 #33406B;}
+.dark .ua-card:hover{box-shadow:10px 10px 0 0 #33406B;}
+.dark .ua-card.active{box-shadow:8px 8px 0 0 var(--ua-primary);}
+.dark .ua-card.active:hover{box-shadow:10px 10px 0 0 var(--ua-primary);}
+</style>
+
+<div class="ua-wrap">
+  <header class="ua-header">
+    <div>
+      <h2 class="ua-title">Active Accounts</h2>
+      <p class="ua-sub">Kelola instance Telegram yang terhubung. <b>Klik kartu akun</b> untuk menjadikannya akun aktif — command, grup &amp; campaign akan mengikuti akun tersebut.</p>
+    </div>
+    <div class="ua-statusbar" id="ua-status">
+      <div class="grp"><span class="ua-dot on"></span><span>Online: 0</span></div>
+      <div class="sep"></div>
+      <div class="grp"><span class="ua-dot off"></span><span>Offline: 0</span></div>
+    </div>
+  </header>
+
+  <div id="acc-list" class="ua-grid">
+    <div class="ua-loading">Memuat akun...</div>
+  </div>
+</div>
+
+<!-- Phone Login Modal -->
+<div id="phone-modal" class="ua-modal hidden">
+  <div class="ua-modal-box">
+    <div class="ua-modal-head">
+      <h3><span class="material-symbols-outlined">phone_iphone</span> Login via Nomor Telepon</h3>
+      <button onclick="document.getElementById('phone-modal').classList.add('hidden')" class="ua-x">&times;</button>
+    </div>
+    <div class="ua-modal-body">
+      <div id="phone-result" class="hidden ua-result"></div>
+      <div id="phone-step1">
+        <div class="ua-field">
+          <label>Nomor Telepon</label>
+          <input type="tel" id="phone-input" class="ua-input" placeholder="+6281234567890">
+        </div>
+        <button id="btn-send-code" onclick="sendCode()" class="ua-mbtn">Kirim Kode OTP</button>
+      </div>
+      <div id="phone-step2" class="hidden">
+        <div class="ua-field">
+          <label>Kode OTP</label>
+          <input type="text" id="otp-input" class="ua-input otp" placeholder="12345" maxlength="6">
+        </div>
+        <button id="btn-verify-code" onclick="verifyCode()" class="ua-mbtn">Verifikasi</button>
+      </div>
+      <div id="phone-step3" class="hidden">
+        <p style="font-size:14px;color:var(--ua-var);margin-bottom:12px;">Masukkan 2FA password:</p>
+        <div class="ua-field">
+          <input type="password" id="phone-2fa-input" class="ua-input" placeholder="2FA Password">
+        </div>
+        <button id="btn-verify-2fa" onclick="verify2FA()" class="ua-mbtn">Verifikasi 2FA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Session String Modal -->
+<div id="session-modal" class="ua-modal hidden">
+  <div class="ua-modal-box">
+    <div class="ua-modal-head">
+      <h3><span class="material-symbols-outlined">key</span> Tambah via Session String</h3>
+      <button onclick="document.getElementById('session-modal').classList.add('hidden')" class="ua-x">&times;</button>
+    </div>
+    <div class="ua-modal-body">
+      <div id="session-result" class="hidden ua-result"></div>
+      <div class="ua-field">
+        <label>Session String</label>
+        <textarea id="session-input" rows="4" class="ua-input mono" placeholder="BQC7..."></textarea>
+        <p class="ua-hint">Generate dengan: python generate_session.py</p>
+      </div>
+      <button id="btn-add-session" onclick="addSession()" class="ua-mbtn">Tambah Akun</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var qrWebSocket = null;
+var phoneCodeHash = '';
+var phoneNumber = '';
+var ACTIVE_ID = null;
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function dots(text) {
+    return '<div class="ua-dots"><div class="row"><span></span><span></span><span></span></div>'
+        + '<p style="font-size:13px;color:var(--ua-var);text-align:center;padding:0 8px;">' + esc(text) + '</p></div>';
+}
+
+function fmtDate(v) {
+    if (!v) return '-';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// Kembalikan kotak Ready To Bind ke tampilan default
+function resetBind() {
+    var el = document.getElementById('qr-bind');
+    if (!el) return;
+    el.innerHTML = '<span class="material-symbols-outlined">qr_code_2</span>'
+        + '<span class="lbl">Ready To Bind</span>'
+        + '<div class="ua-scanline"></div>';
+    if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
+}
+
+// Render account list
+function renderAccounts(list) {
+    var box = document.getElementById('acc-list');
+    var addCard = '<article class="ua-addcard">'
+        + '<div class="ua-addleft">'
+        + '<span class="material-symbols-outlined ico">qr_code_scanner</span>'
+        + '<h3>Initialize New Instance</h3>'
+        + '<p>Klik <b>Scan QR</b> lalu QR code akan muncul di kotak kanan (Ready To Bind). Scan dengan Telegram HP kamu untuk bind session baru, atau pakai nomor telepon / session string.</p>'
+        + '<div class="ua-addbtns">'
+        + '<button class="ua-btn solid" onclick="startQrLogin()"><span class="material-symbols-outlined">qr_code_scanner</span> Scan QR</button>'
+        + '<button class="ua-btn ghost" onclick="document.getElementById(\'phone-modal\').classList.remove(\'hidden\')"><span class="material-symbols-outlined">phone_iphone</span> Nomor Telepon</button>'
+        + '<button class="ua-btn ghost" onclick="document.getElementById(\'session-modal\').classList.remove(\'hidden\')"><span class="material-symbols-outlined">key</span> Session String</button>'
+        + '</div></div>'
+        + '<div class="ua-addright"><div class="stripes"></div>'
+        + '<div class="ua-qrbox"><div class="ua-qrinner" id="qr-bind">'
+        + '<span class="material-symbols-outlined">qr_code_2</span>'
+        + '<span class="lbl">Ready To Bind</span>'
+        + '<div class="ua-scanline"></div>'
+        + '</div></div></div></article>';
+
+    if (!list || !list.length) {
+        box.innerHTML = '<div class="ua-empty"><span class="material-symbols-outlined">smartphone</span>'
+            + '<h3>Belum ada akun Telegram</h3>'
+            + '<p>Gunakan panel di bawah untuk menambahkan akun pertama kamu.</p></div>'
+            + addCard;
+        updateStatus(0, 0);
+        return;
+    }
+
+    var html = '';
+    var online = 0, offline = 0;
+    for (var i = 0; i < list.length; i++) {
+        var a = list[i];
+        var name = a.first_name || a.username || a.phone || ('Akun #' + a.id);
+        var initial = String(name).charAt(0).toUpperCase();
+        var sub = '';
+        if (a.username) sub += '@' + esc(a.username);
+        if (a.phone) sub += (sub ? ' \u00b7 ' : '') + esc(a.phone);
+        if (!sub) sub = 'ID ' + esc(a.telegram_id || '-');
+
+        var conn = !!a.is_connected;
+        if (conn) online++; else offline++;
+        var isActive = (ACTIVE_ID != null && a.id === ACTIVE_ID);
+        var badge = conn
+            ? '<div class="ua-badge"><span>Connected</span><i class="ua-dot on"></i></div>'
+            : '<div class="ua-badge off"><span>Offline</span><i class="ua-dot off"></i></div>';
+        var sessRow = conn
+            ? '<div class="r"><span>Session:</span><b>Active</b></div>'
+            : '<div class="r"><span>Session:</span><b class="err">Stopped</b></div>';
+        var toggleBtn = conn
+            ? '<button class="ua-act" onclick="toggleAccount(' + a.id + ')"><span class="material-symbols-outlined">pause</span> Stop</button>'
+            : '<button class="ua-act start" onclick="toggleAccount(' + a.id + ')"><span class="material-symbols-outlined">play_arrow</span> Start</button>';
+        var activeBtn = isActive
+            ? '<button class="ua-act setactive on"><span class="material-symbols-outlined">check_circle</span> Aktif</button>'
+            : '<button class="ua-act setactive" onclick="setActiveAccount(' + a.id + ')"><span class="material-symbols-outlined">radio_button_unchecked</span> Pilih</button>';
+        var activeFlag = isActive
+            ? '<div class="ua-activeflag"><span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> Akun Aktif</div>'
+            : '';
+        var safeName = String(name).replace(/'/g, '');
+
+        html += '<article class="ua-card' + (conn ? '' : ' off') + (isActive ? ' active' : '') + '">'
+            + badge
+            + '<div class="ua-body clickable" onclick="setActiveAccount(' + a.id + ')" title="Klik untuk jadikan akun aktif">'
+            + activeFlag
+            + '<div class="ua-idrow">'
+            + '<div class="ua-avatar">' + esc(initial) + '</div>'
+            + '<div><h3 class="ua-name">' + esc(name) + '</h3><p class="ua-namesub">' + sub + '</p></div>'
+            + '</div>'
+            + '<div class="ua-stats">'
+            + '<div class="r"><span>Telegram ID:</span><b>' + esc(a.telegram_id || '-') + '</b></div>'
+            + '<div class="r"><span>Added:</span><b>' + esc(fmtDate(a.added_at)) + '</b></div>'
+            + sessRow
+            + '</div></div>'
+            + '<div class="ua-actions">'
+            + activeBtn
+            + toggleBtn
+            + '<button class="ua-act danger" onclick="deleteAccount(' + a.id + ', \'' + esc(safeName) + '\')"><span class="material-symbols-outlined">delete</span></button>'
+            + '</div></article>';
+    }
+    box.innerHTML = html + addCard;
+    updateStatus(online, offline);
+}
+
+function updateStatus(online, offline) {
+    var el = document.getElementById('ua-status');
+    if (!el) return;
+    el.innerHTML = '<div class="grp"><span class="ua-dot on"></span><span>Online: ' + online + '</span></div>'
+        + '<div class="sep"></div>'
+        + '<div class="grp"><span class="ua-dot off"></span><span>Offline: ' + offline + '</span></div>';
+}
+
+async function loadAccounts() {
+    try {
+        var r = await Promise.all([
+            fetch('/api/accounts/', { credentials: 'same-origin' }),
+            fetch('/api/accounts/active', { credentials: 'same-origin' })
+        ]);
+        var list = r[0].ok ? await r[0].json() : [];
+        var act = r[1].ok ? await r[1].json() : {};
+        ACTIVE_ID = (act && act.account_id != null) ? act.account_id : null;
+        renderAccounts(list);
+    } catch (e) {
+        console.error(e);
+        renderAccounts([]);
+    }
+}
+
+// Set akun aktif dengan klik kartu / tombol Pilih
+async function setActiveAccount(id) {
+    if (id === ACTIVE_ID) return;
+    try {
+        var res = await fetch('/api/accounts/active', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ account_id: parseInt(id) })
+        });
+        if (res.ok) {
+            location.reload();
+        }
+    } catch (e) { console.error(e); }
+}
+
+// QR Code Login — render langsung di kotak Ready To Bind
+function startQrLogin() {
+    var el = document.getElementById('qr-bind');
+    if (!el) return;
+    var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    if (qrWebSocket) { try { qrWebSocket.close(); } catch (e) {} qrWebSocket = null; }
+    qrWebSocket = new WebSocket(proto + '://' + location.host + '/api/accounts/qr-login');
+    el.innerHTML = dots('Menghubungkan ke Telegram...');
+
+    qrWebSocket.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        if (data.type === 'status') {
+            el.innerHTML = dots(data.message);
+        }
+        if (data.type === 'qr_url') {
+            if (data.image) {
+                el.innerHTML = '<img src="' + data.image + '" alt="QR" style="width:100%;height:100%;object-fit:contain;">';
+            } else {
+                el.innerHTML = '<a href="' + esc(data.url) + '" style="color:var(--ua-pc);font-size:11px;word-break:break-all;padding:8px;text-align:center;">' + esc(data.url) + '</a>';
+            }
+        }
+        if (data.type === 'need_2fa') {
+            el.innerHTML = '<div style="padding:10px;width:100%;text-align:center;">'
+                + '<p style="font-size:12px;color:var(--ua-var);margin-bottom:8px;">Akun ini punya 2FA. Masukkan password:</p>'
+                + '<input type="password" id="qr-2fa-inline" class="ua-input" placeholder="2FA password" style="margin-bottom:8px;">'
+                + '<button onclick="submitQr2FA()" class="ua-mbtn">Verifikasi</button></div>';
+        }
+        if (data.type === 'success') {
+            el.innerHTML = '<div style="padding:10px;text-align:center;">'
+                + '<p style="color:#0b6b2e;font-size:16px;margin-bottom:4px;font-weight:700;">Berhasil!</p>'
+                + '<p style="font-size:12px;color:var(--ua-var);">' + esc(data.message) + '</p></div>';
+            setTimeout(function () { location.reload(); }, 2000);
+        }
+        if (data.type === 'error') {
+            el.innerHTML = '<div style="padding:10px;text-align:center;">'
+                + '<p style="color:var(--ua-err);font-size:13px;margin-bottom:8px;">' + esc(data.message) + '</p>'
+                + '<button onclick="resetBind()" class="ua-mbtn">Coba Lagi</button></div>';
+        }
+    };
+
+    qrWebSocket.onerror = function () {
+        el.innerHTML = '<div style="padding:10px;text-align:center;">'
+            + '<p style="color:var(--ua-err);font-size:13px;margin-bottom:8px;">Koneksi WebSocket gagal</p>'
+            + '<button onclick="resetBind()" class="ua-mbtn">Coba Lagi</button></div>';
+    };
+}
+
+function submitQr2FA() {
+    var inp = document.getElementById('qr-2fa-inline');
+    var el = document.getElementById('qr-bind');
+    if (qrWebSocket && inp && inp.value) {
+        if (el) el.innerHTML = dots('Memverifikasi 2FA...');
+        qrWebSocket.send(JSON.stringify({ password: inp.value }));
+    }
+}
+
+// Phone Login
+function setBtnLoading(id, loading, loadingText, normalText) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.classList.toggle('op60', loading);
+    btn.textContent = loading ? loadingText : normalText;
+}
+
+async function sendCode() {
+    phoneNumber = document.getElementById('phone-input').value;
+    var r = document.getElementById('phone-result');
+    r.classList.add('hidden');
+    setBtnLoading('btn-send-code', true, 'Mengirim kode...', 'Kirim Kode OTP');
+    try {
+        var res = await fetch('/api/accounts/send-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phoneNumber })
+        });
+        var data = await res.json();
+        if (res.ok) {
+            phoneCodeHash = data.phone_code_hash;
+            document.getElementById('phone-step1').classList.add('hidden');
+            document.getElementById('phone-step2').classList.remove('hidden');
+            r.classList.remove('hidden');
+            r.className = 'ua-result ok';
+            r.textContent = data.message;
+        } else {
+            showPhoneError(data.detail);
+        }
+    } catch (e) {
+        showPhoneError('Koneksi error');
+    }
+    setBtnLoading('btn-send-code', false, 'Mengirim kode...', 'Kirim Kode OTP');
+}
+
+async function verifyCode() {
+    var code = document.getElementById('otp-input').value;
+    var r = document.getElementById('phone-result');
+    r.classList.add('hidden');
+    setBtnLoading('btn-verify-code', true, 'Memverifikasi...', 'Verifikasi');
+    try {
+        var res = await fetch('/api/accounts/verify-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phoneNumber, code: code, phone_code_hash: phoneCodeHash })
+        });
+        var data = await res.json();
+        if (data.needs_2fa) {
+            document.getElementById('phone-step2').classList.add('hidden');
+            document.getElementById('phone-step3').classList.remove('hidden');
+        } else if (res.ok) {
+            r.classList.remove('hidden');
+            r.className = 'ua-result ok';
+            r.textContent = data.message;
+            setTimeout(function () { location.reload(); }, 2000);
+        } else {
+            showPhoneError(data.detail);
+        }
+    } catch (e) {
+        showPhoneError('Koneksi error');
+    }
+    setBtnLoading('btn-verify-code', false, 'Memverifikasi...', 'Verifikasi');
+}
+
+async function verify2FA() {
+    var pw = document.getElementById('phone-2fa-input').value;
+    var r = document.getElementById('phone-result');
+    setBtnLoading('btn-verify-2fa', true, 'Memverifikasi...', 'Verifikasi 2FA');
+    try {
+        var res = await fetch('/api/accounts/verify-2fa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw })
+        });
+        var data = await res.json();
+        if (res.ok) {
+            r.classList.remove('hidden');
+            r.className = 'ua-result ok';
+            r.textContent = data.message;
+            setTimeout(function () { location.reload(); }, 2000);
+        } else {
+            showPhoneError(data.detail);
+        }
+    } catch (e) {
+        showPhoneError('Koneksi error');
+    }
+    setBtnLoading('btn-verify-2fa', false, 'Memverifikasi...', 'Verifikasi 2FA');
+}
+
+function showPhoneError(msg) {
+    var r = document.getElementById('phone-result');
+    r.classList.remove('hidden');
+    r.className = 'ua-result err';
+    r.textContent = msg || 'Terjadi kesalahan';
+}
+
+// Session String
+async function addSession() {
+    var session = document.getElementById('session-input').value;
+    var r = document.getElementById('session-result');
+    r.classList.add('hidden');
+    setBtnLoading('btn-add-session', true, 'Menghubungkan...', 'Tambah Akun');
+    try {
+        var res = await fetch('/api/accounts/add-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_string: session })
+        });
+        var data = await res.json();
+        r.classList.remove('hidden');
+        if (res.ok) {
+            r.className = 'ua-result ok';
+            r.textContent = data.message;
+            setTimeout(function () { location.reload(); }, 2000);
+        } else {
+            r.className = 'ua-result err';
+            r.textContent = data.detail;
+        }
+    } catch (e) {
+        r.classList.remove('hidden');
+        r.className = 'ua-result err';
+        r.textContent = 'Koneksi error';
+    }
+    setBtnLoading('btn-add-session', false, 'Menghubungkan...', 'Tambah Akun');
+}
+
+// Toggle & Delete
+async function toggleAccount(id) {
+    await fetch('/api/accounts/' + id + '/toggle', { method: 'POST' });
+    loadAccounts();
+}
+
+async function deleteAccount(id, name) {
+    if (!confirm('Hapus akun ' + name + '?')) return;
+    await fetch('/api/accounts/' + id, { method: 'DELETE' });
+    loadAccounts();
+}
+
+loadAccounts();
+</script>
+{% endblock %}

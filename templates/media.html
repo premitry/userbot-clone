@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Media Library{% endblock %}
+{% block nav_media %}bg-gray-700 text-indigo-400{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-2xl font-bold">🖼️ Media Library</h2>
+            <p class="text-sm text-gray-500 mt-1">Upload sekali, pakai berkali-kali saat membuat Message</p>
+        </div>
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 mb-6">
+        <div class="flex items-center gap-3 flex-wrap">
+            <input type="file" id="mfile" class="text-sm text-gray-400 flex-1 min-w-[200px]">
+            <button onclick="uploadFile()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">Upload</button>
+        </div>
+        <p id="up-status" class="text-xs text-gray-500 mt-2">Maks 50MB. Foto/video/dokumen.</p>
+    </div>
+
+    <div id="media-grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-12 text-center text-gray-500 sm:col-span-2 lg:col-span-3">Memuat...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var MEDIA = [];
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function fmtSize(n) {
+    n = n || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+}
+
+function render() {
+    var box = document.getElementById('media-grid');
+    if (!MEDIA.length) {
+        box.innerHTML = '<div class="bg-gray-800 rounded-xl border border-gray-700 p-12 text-center text-gray-500 sm:col-span-2 lg:col-span-3">Belum ada media. Upload di atas.</div>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < MEDIA.length; i++) {
+        var m = MEDIA[i];
+        var thumb = (m.kind === 'photo')
+            ? '<img src="' + esc(m.url) + '" class="w-full h-36 object-cover rounded-lg mb-2">'
+            : '<div class="w-full h-36 flex items-center justify-center bg-gray-900 rounded-lg mb-2 text-4xl">' + (m.kind === 'video' ? '🎬' : '📄') + '</div>';
+        html += '<div class="bg-gray-800 rounded-xl border border-gray-700 p-3">'
+            + thumb
+            + '<p class="text-sm font-medium truncate">' + esc(m.name) + '</p>'
+            + '<p class="text-xs text-gray-500">' + esc(m.kind) + ' · ' + fmtSize(m.size) + '</p>'
+            + '<div class="flex items-center gap-2 mt-2">'
+            + '<button onclick="copyUrl(\'' + esc(m.url) + '\')" class="flex-1 px-2 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-xs">Salin URL</button>'
+            + '<button onclick="delMedia(' + m.id + ')" class="px-2 py-1.5 bg-red-900/50 text-red-400 hover:bg-red-900 rounded text-xs">🗑️</button>'
+            + '</div>'
+            + '</div>';
+    }
+    box.innerHTML = html;
+}
+
+function copyUrl(u) {
+    if (navigator.clipboard) { navigator.clipboard.writeText(u); }
+    var s = document.getElementById('up-status');
+    s.textContent = 'URL disalin: ' + u;
+}
+
+async function load() {
+    try {
+        var res = await fetch('/api/media/', { credentials: 'same-origin' });
+        MEDIA = res.ok ? await res.json() : [];
+        render();
+    } catch (e) { console.error(e); }
+}
+
+async function uploadFile() {
+    var input = document.getElementById('mfile');
+    if (!input.files || !input.files.length) { alert('Pilih file dulu'); return; }
+    var s = document.getElementById('up-status');
+    s.textContent = 'Mengunggah...';
+    var fd = new FormData();
+    fd.append('file', input.files[0]);
+    try {
+        var res = await fetch('/api/media/upload', { method: 'POST', body: fd });
+        var data = await res.json();
+        if (res.ok) { s.textContent = 'Terunggah: ' + data.name; input.value = ''; load(); }
+        else { s.textContent = data.detail || 'Gagal unggah'; }
+    } catch (e) { s.textContent = 'Error saat unggah'; }
+}
+
+async function delMedia(id) {
+    if (!confirm('Hapus media ini?')) return;
+    await fetch('/api/media/' + id, { method: 'DELETE' });
+    load();
+}
+
+load();
+</script>
+{% endblock %}

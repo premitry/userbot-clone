@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Channels{% endblock %}
+{% block nav_channels %}bg-gray-700 text-indigo-400{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold">📡 Channel Library</h2>
+        <p class="text-sm text-gray-500 mt-1">Sync postingan channel untuk dipakai forward/copy di Message</p>
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-5 mb-6">
+        <div class="flex items-end gap-3 flex-wrap">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm text-gray-400 mb-1">Channel (username / link / id)</label>
+                <input type="text" id="c-input" class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg outline-none focus:border-indigo-500" placeholder="@namachannel">
+            </div>
+            <div class="w-28">
+                <label class="block text-sm text-gray-400 mb-1">Jumlah</label>
+                <input type="number" id="c-limit" value="30" min="1" max="100" class="w-full px-4 py-2.5 bg-gray-700 border border-gray-600 rounded-lg outline-none focus:border-indigo-500">
+            </div>
+            <button onclick="syncChannel(this)" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">🔄 Sync</button>
+        </div>
+        <p id="c-status" class="text-xs text-gray-500 mt-2"></p>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-1">
+            <h3 class="font-semibold mb-3">Channel Ter-sync</h3>
+            <div id="chan-list" class="space-y-2"><p class="text-sm text-gray-500">Memuat...</p></div>
+        </div>
+        <div class="lg:col-span-2">
+            <h3 class="font-semibold mb-3">Postingan</h3>
+            <div id="post-list" class="space-y-2"><p class="text-sm text-gray-500">Pilih channel di kiri.</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var CHANNELS = [];
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function renderChannels() {
+    var box = document.getElementById('chan-list');
+    if (!CHANNELS.length) { box.innerHTML = '<p class="text-sm text-gray-500">Belum ada channel. Sync di atas.</p>'; return; }
+    var html = '';
+    for (var i = 0; i < CHANNELS.length; i++) {
+        var c = CHANNELS[i];
+        html += '<button onclick="loadPosts(\'' + esc(c.channel_chat_id) + '\')" class="w-full text-left bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 p-3">'
+            + '<p class="text-sm font-medium truncate">' + esc(c.channel_title) + '</p>'
+            + '<p class="text-xs text-gray-500">' + (c.count || 0) + ' post</p>'
+            + '</button>';
+    }
+    box.innerHTML = html;
+}
+
+async function loadChannels() {
+    try {
+        var res = await fetch('/api/channels/list', { credentials: 'same-origin' });
+        CHANNELS = res.ok ? await res.json() : [];
+        renderChannels();
+    } catch (e) { console.error(e); }
+}
+
+async function loadPosts(cid) {
+    var box = document.getElementById('post-list');
+    box.innerHTML = '<p class="text-sm text-gray-500">Memuat...</p>';
+    try {
+        var res = await fetch('/api/channels/?channel_chat_id=' + encodeURIComponent(cid), { credentials: 'same-origin' });
+        var list = res.ok ? await res.json() : [];
+        if (!list.length) { box.innerHTML = '<p class="text-sm text-gray-500">Tidak ada post.</p>'; return; }
+        var html = '';
+        for (var i = 0; i < list.length; i++) {
+            var p = list[i];
+            var media = p.has_media ? '<span class="px-2 py-0.5 bg-gray-700 rounded text-xs">media</span> ' : '';
+            var link = p.post_url ? '<a href="' + esc(p.post_url) + '" target="_blank" class="text-indigo-400 hover:underline text-xs">buka</a>' : '';
+            var url = p.post_url || '';
+            html += '<div class="bg-gray-800 rounded-lg border border-gray-700 p-3">'
+                + '<div class="flex justify-between items-start gap-2">'
+                + '<div class="min-w-0">'
+                + '<p class="text-xs text-gray-500 mb-1">#' + p.tg_message_id + ' ' + media + link + '</p>'
+                + '<p class="text-sm text-gray-300 break-words">' + esc(p.preview || '') + '</p>'
+                + '</div>'
+                + '<div class="flex flex-col gap-1 shrink-0">'
+                + '<button onclick="copyUrl(\'' + esc(url) + '\')" class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs">Salin URL</button>'
+                + '<button onclick="delPost(' + p.id + ',\'' + esc(cid) + '\')" class="px-2 py-1 bg-red-900/50 text-red-400 hover:bg-red-900 rounded text-xs">🗑️</button>'
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        }
+        box.innerHTML = html;
+    } catch (e) { box.innerHTML = '<p class="text-sm text-red-400">Gagal memuat post.</p>'; }
+}
+
+function copyUrl(u) {
+    if (!u) { return; }
+    if (navigator.clipboard) { navigator.clipboard.writeText(u); }
+    document.getElementById('c-status').textContent = 'URL disalin: ' + u;
+}
+
+async function syncChannel(btn) {
+    var input = document.getElementById('c-input').value.trim();
+    if (!input) { alert('Isi channel dulu'); return; }
+    var limit = parseInt(document.getElementById('c-limit').value) || 30;
+    var s = document.getElementById('c-status');
+    btn.disabled = true; s.textContent = 'Sinkronisasi...';
+    try {
+        var res = await fetch('/api/channels/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: input, limit: limit }) });
+        var data = await res.json();
+        s.textContent = res.ok ? ('✅ ' + data.message) : ('❌ ' + (data.detail || 'Gagal'));
+        if (res.ok) { loadChannels(); if (data.channel_chat_id) loadPosts(data.channel_chat_id); }
+    } catch (e) { s.textContent = '❌ Koneksi error'; }
+    btn.disabled = false;
+}
+
+async function delPost(id, cid) {
+    if (!confirm('Hapus post ini dari library?')) return;
+    await fetch('/api/channels/' + id, { method: 'DELETE' });
+    loadPosts(cid);
+    loadChannels();
+}
+
+loadChannels();
+</script>
+{% endblock %}
