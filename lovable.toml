@@ -1,0 +1,4 @@
+[run]
+dev = "sh -c 'echo Python workspace && sleep infinity'"
+build = "true"
+"build:dev" = "true"
