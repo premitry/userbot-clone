@@ -524,6 +524,7 @@ function resetForm() {
     document.getElementById('qris-decode-status').textContent = 'Upload gambar QRIS statis → payload dibaca otomatis. Atau paste payload manual.';
     STEPS = [];
     renderSteps();
+    setQrisMode('perm');
     onTypeChange();
 }
 
