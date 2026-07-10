@@ -322,6 +322,8 @@ class MessageCreate(BaseModel):
     qris_payload: Optional[str] = None
     qris_min: Optional[int] = None
     qris_max: Optional[int] = None
+    qris_auto_delete_seconds: Optional[int] = 0
+    qris_footer_text: Optional[str] = None
     is_active: Optional[bool] = True
     steps: Optional[list[WorkflowStepIn]] = None
 
@@ -339,6 +341,8 @@ class MessageUpdate(BaseModel):
     qris_payload: Optional[str] = None
     qris_min: Optional[int] = None
     qris_max: Optional[int] = None
+    qris_auto_delete_seconds: Optional[int] = None
+    qris_footer_text: Optional[str] = None
     is_active: Optional[bool] = None
     steps: Optional[list[WorkflowStepIn]] = None
 
@@ -358,6 +362,8 @@ class MessageResponse(BaseModel):
     qris_payload: Optional[str] = None
     qris_min: Optional[int] = None
     qris_max: Optional[int] = None
+    qris_auto_delete_seconds: Optional[int] = 0
+    qris_footer_text: Optional[str] = None
     is_active: bool
     created_at: datetime
     steps: list[WorkflowStepResponse] = []

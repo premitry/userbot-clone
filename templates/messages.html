@@ -251,6 +251,25 @@
           </div>
           <p id="qris-decode-status" class="uc-hint">Upload gambar QRIS statis → payload dibaca otomatis. Atau paste payload manual.</p>
           <p class="uc-hint">Command manual bebas nominal: /qris 5000, /qris 5k, /qris 25.000. Caption boleh pakai {amount} dan {amount_rp}.</p>
+
+          <label class="uc-label" style="margin-top:12px;">Auto-hapus pesan QRIS (detik)</label>
+          <div class="uc-inline">
+            <input type="number" id="m-qris-ttl" min="0" step="10" placeholder="0 = tidak dihapus" class="uc-input" style="flex:1;">
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=60" style="flex:0 0 auto;">1 mnt</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=300" style="flex:0 0 auto;">5 mnt</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=600" style="flex:0 0 auto;">10 mnt</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=0" style="flex:0 0 auto;">Off</button>
+          </div>
+          <p class="uc-hint">Isi 0 (atau kosong) supaya QRIS tetap ada tanpa dihapus.</p>
+
+          <label class="uc-label" style="margin-top:12px;">Teks tambahan di bawah QRIS (footer)</label>
+          <textarea id="m-qris-footer" rows="3" class="uc-input" placeholder="Contoh: 💳 Silakan scan QRIS di atas..."></textarea>
+          <div class="uc-inline" style="flex-wrap:wrap;gap:6px;">
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(1)">Contoh 1</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(2)">Contoh 2</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(3)">Contoh 3</button>
+          </div>
+          <p class="uc-hint">Boleh pakai {amount} dan {amount_rp}. Kosongkan kalau tidak mau footer.</p>
         </div>
 
         <div id="wrap-workflow" class="hidden uc-field">
@@ -378,6 +397,19 @@ async function decodeQris() {
     } catch (e) { s.textContent = '❌ Error decode. Paste payload manual.'; }
 }
 
+var QRIS_FOOTER_PRESETS = {
+    1: "💳 Silakan scan QRIS di atas untuk melakukan pembayaran.\n📌 Nominal: {amount_rp}\n⏳ QRIS berlaku beberapa menit saja, mohon segera diselesaikan.\n🙏 Terima kasih atas kepercayaannya!",
+    2: "✨ Pembayaran senilai {amount_rp}\n📲 Scan QRIS di atas via e-wallet / m-banking favoritmu (GoPay, OVO, DANA, ShopeePay, BCA, dll).\n📸 Setelah bayar, kirim bukti transfer ya.\n🚀 Pesanan langsung kami proses!",
+    3: "🧾 Total tagihan: {amount_rp}\n🔒 Aman & langsung masuk ke rekening kami.\n⏱️ Mohon selesaikan dalam waktu singkat sebelum QRIS ini kadaluarsa otomatis.\n💬 Kalau ada kendala, langsung chat admin ya."
+};
+
+function fillQrisFooter(n) {
+    var ta = document.getElementById('m-qris-footer');
+    ta.value = QRIS_FOOTER_PRESETS[n] || '';
+}
+
+
+
 function renderSteps() {
     var box = document.getElementById('steps-box');
     if (!STEPS.length) { box.innerHTML = '<p class="uc-hint">Belum ada step. Klik + Step.</p>'; return; }
@@ -468,6 +500,8 @@ function openEdit(id) {
     document.getElementById('m-channel').value = m.channel_post_url || '';
     document.getElementById('m-channel-mode').value = m.channel_mode || 'specific';
     document.getElementById('m-qpayload').value = m.qris_payload || '';
+    document.getElementById('m-qris-ttl').value = (m.qris_auto_delete_seconds != null ? m.qris_auto_delete_seconds : 0);
+    document.getElementById('m-qris-footer').value = m.qris_footer_text || '';
     STEPS = [];
     if (m.steps) {
         for (var k = 0; k < m.steps.length; k++) {
@@ -517,7 +551,9 @@ document.getElementById('msg-form').addEventListener('submit', async function (e
         channel_post_url: document.getElementById('m-channel').value || null,
         channel_mode: chMode,
         channel_chat_id: (chMode === 'specific') ? null : (chPick || null),
-        qris_payload: document.getElementById('m-qpayload').value || null
+        qris_payload: document.getElementById('m-qpayload').value || null,
+        qris_auto_delete_seconds: parseInt(document.getElementById('m-qris-ttl').value || '0', 10) || 0,
+        qris_footer_text: document.getElementById('m-qris-footer').value || null
     };
     if (type === 'workflow') { body.steps = STEPS; }
     var url = id ? ('/api/messages/' + id) : '/api/messages/';
