@@ -25,6 +25,17 @@ load_dotenv(ENV_PATH)
 _INSECURE_SECRETS = {"", "change-me-please", "changeme", "secret", "please-change"}
 
 
+def _env_int(key: str, default: int, min_value: int = 64, max_value: int = 4096) -> int:
+    """Ambil integer dari env dengan batas aman supaya config salah tidak bikin crash."""
+    raw = (os.getenv(key) or "").strip()
+    try:
+        val = int(raw) if raw else default
+    except ValueError:
+        logger.warning("%s harus angka; pakai default %s", key, default)
+        val = default
+    return max(min_value, min(max_value, val))
+
+
 def _persist_env(key: str, value: str) -> None:
     """Simpan key=value ke .env (best effort) dan ke environment proses ini."""
     try:
@@ -71,6 +82,12 @@ class Settings:
 
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./userbot.db")
+
+    # QRIS image output (pixel). Bisa diubah dari .env tanpa edit kode.
+    QRIS_SIZE_SMALL: int = _env_int("QRIS_SIZE_SMALL", 280, 128, 2048)
+    QRIS_SIZE_MEDIUM: int = _env_int("QRIS_SIZE_MEDIUM", 380, 128, 2048)
+    QRIS_SIZE_LARGE: int = _env_int("QRIS_SIZE_LARGE", 500, 128, 2048)
+    QRIS_MAX_IMAGE_WIDTH: int = _env_int("QRIS_MAX_IMAGE_WIDTH", 500, 128, 2048)
 
 
 settings = Settings()

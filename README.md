@@ -121,6 +121,17 @@ API_HASH=xxxxxxxxxxxxxxxxxxxxxxxx
 SECRET_KEY=ganti-dengan-string-random-panjang
 ```
 
+Opsional untuk ukuran gambar QRIS:
+
+```env
+QRIS_SIZE_SMALL=280
+QRIS_SIZE_MEDIUM=380
+QRIS_SIZE_LARGE=500
+QRIS_MAX_IMAGE_WIDTH=500
+```
+
+`small/medium/large` mengatur ukuran output QRIS dalam pixel. `QRIS_MAX_IMAGE_WIDTH` adalah batas lebar maksimum; kalau preset lebih besar dari batas ini, gambar otomatis dikecilkan proporsional supaya tampil konsisten di Telegram. Setelah mengubah `.env`, restart service/app.
+
 ### 5. Run
 
 ```bash
@@ -535,6 +546,19 @@ Setiap Message punya konfigurasi:
 | **Media** | URL atau upload file (Album: satu URL per baris) |
 | **Channel Post URL** | Untuk Forward/Copy Channel |
 | **Active** | Aktif/nonaktif |
+
+### Ukuran Dynamic QRIS
+
+Ukuran tombol **Kecil / Sedang / Besar** mengambil nilai dari `.env`:
+
+```env
+QRIS_SIZE_SMALL=280
+QRIS_SIZE_MEDIUM=380
+QRIS_SIZE_LARGE=500
+QRIS_MAX_IMAGE_WIDTH=500
+```
+
+Gambar QRIS selalu di-resize proporsional ke preset terpilih dan tidak melewati `QRIS_MAX_IMAGE_WIDTH`, jadi ukuran foto di Telegram lebih stabil antar perangkat. Restart aplikasi setelah mengubah nilai ini.
 
 Contoh setup:
 
