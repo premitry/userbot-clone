@@ -555,18 +555,32 @@ function updateStep(i, field, val) { if (!STEPS[i]) return; if (field === 'delay
 function removeStep(i) { STEPS.splice(i, 1); renderSteps(); }
 function moveStep(i, dir) { var j = i + dir; if (j < 0 || j >= STEPS.length) return; var tmp = STEPS[i]; STEPS[i] = STEPS[j]; STEPS[j] = tmp; renderSteps(); }
 
+async function safeFetchJson(url) {
+    try {
+        var r = await fetch(url, { credentials: 'same-origin' });
+        if (!r.ok) { console.warn('Fetch', url, 'HTTP', r.status); return []; }
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.indexOf('application/json') === -1) { console.warn('Fetch', url, 'non-JSON'); return []; }
+        return await r.json();
+    } catch (e) { console.error('Fetch', url, e); return []; }
+}
 async function loadAll() {
+    var box = document.getElementById('msg-list');
     try {
         var res = await Promise.all([
-            fetch('/api/messages/', { credentials: 'same-origin' }),
-            fetch('/api/media/', { credentials: 'same-origin' }),
-            fetch('/api/channels/list', { credentials: 'same-origin' })
+            safeFetchJson('/api/messages/'),
+            safeFetchJson('/api/media/'),
+            safeFetchJson('/api/channels/list')
         ]);
-        MESSAGES = res[0].ok ? await res[0].json() : [];
-        MEDIA = res[1].ok ? await res[1].json() : [];
-        CHAN_LIST = res[2].ok ? await res[2].json() : [];
-        renderMessages();
-    } catch (e) { console.error(e); }
+        MESSAGES = res[0] || [];
+        MEDIA = res[1] || [];
+        CHAN_LIST = res[2] || [];
+    } catch (e) { console.error(e); MESSAGES = []; MEDIA = []; CHAN_LIST = []; }
+    try { renderMessages(); }
+    catch (e) {
+        console.error('renderMessages error', e);
+        if (box) box.innerHTML = '<div class="uc-empty">Gagal memuat daftar command. Cek console browser & log server.</div>';
+    }
 }
 
 function resetForm() {
