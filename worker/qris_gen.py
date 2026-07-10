@@ -187,13 +187,31 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
     return body + _crc16(body)
 
 
-_SIZE_PRESET = {
-    "small": {"box": 6, "border": 2, "final": 280},
-    "medium": {"box": 8, "border": 3, "final": 380},
-    "large": {"box": 10, "border": 4, "final": 500},
-}
+def _size_presets():
+    """Preset ukuran dari environment/config; restart service untuk menerapkan."""
+    from config import settings
 
-_FRAME_PRESETS = ("none", "classic", "modern", "minimal")
+    return {
+        "small": {"box": 6, "border": 2, "final": settings.QRIS_SIZE_SMALL},
+        "medium": {"box": 8, "border": 3, "final": settings.QRIS_SIZE_MEDIUM},
+        "large": {"box": 10, "border": 4, "final": settings.QRIS_SIZE_LARGE},
+    }
+
+
+def _resize_to_width_limit(img, target_width: int, max_width: int):
+    """Resize proporsional: pilih preset, lalu batasi lebar maksimum untuk Telegram."""
+    from PIL import Image
+
+    width = max(1, int(target_width or img.width))
+    limit = max(1, int(max_width or width))
+    final_width = min(width, limit)
+    if img.width == final_width:
+        return img
+    ratio = final_width / img.width
+    return img.resize(
+        (final_width, max(1, int(img.height * ratio))),
+        Image.LANCZOS,
+    )
 
 
 def _render_qr(payload: str, size: str = "small"):
@@ -201,7 +219,8 @@ def _render_qr(payload: str, size: str = "small"):
     import qrcode
     from qrcode.constants import ERROR_CORRECT_M
 
-    cfg = _SIZE_PRESET.get(size or "small", _SIZE_PRESET["small"])
+    presets = _size_presets()
+    cfg = presets.get(size or "small", presets["small"])
     qr = qrcode.QRCode(
         error_correction=ERROR_CORRECT_M,
         box_size=cfg["box"],
@@ -211,75 +230,6 @@ def _render_qr(payload: str, size: str = "small"):
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
     return img, cfg
-
-
-def _draw_preset_frame(qr_img, preset: str, cfg: dict):
-    """Bungkus QR dengan frame preset sederhana (classic/modern/minimal)."""
-    from PIL import Image, ImageDraw, ImageFont
-
-    pad = 40
-    header_h = 70 if preset != "minimal" else 0
-    footer_h = 60 if preset != "minimal" else 40
-    W = qr_img.width + pad * 2
-    H = qr_img.height + pad * 2 + header_h + footer_h
-
-    if preset == "modern":
-        bg = (245, 247, 252)
-        accent = (37, 99, 235)
-    elif preset == "classic":
-        bg = (255, 255, 255)
-        accent = (17, 24, 39)
-    else:  # minimal
-        bg = (255, 255, 255)
-        accent = (17, 24, 39)
-
-    canvas = Image.new("RGB", (W, H), bg)
-    draw = ImageDraw.Draw(canvas)
-
-    # Header bar
-    if header_h:
-        draw.rectangle([0, 0, W, header_h], fill=accent)
-        try:
-            font = ImageFont.truetype("DejaVuSans-Bold.ttf", 28)
-        except Exception:
-            font = ImageFont.load_default()
-        title = "QRIS"
-        tw = draw.textlength(title, font=font)
-        draw.text(((W - tw) / 2, (header_h - 30) / 2), title, fill="white", font=font)
-
-    # QR box
-    qx = pad
-    qy = header_h + pad
-    # Card behind QR for modern
-    if preset == "modern":
-        card = Image.new("RGB", (qr_img.width + 16, qr_img.height + 16), "white")
-        canvas.paste(card, (qx - 8, qy - 8))
-    canvas.paste(qr_img, (qx, qy))
-
-    # Footer
-    try:
-        sfont = ImageFont.truetype("DejaVuSans.ttf", 18)
-    except Exception:
-        sfont = ImageFont.load_default()
-    label = "Scan untuk membayar"
-    lw = draw.textlength(label, font=sfont)
-    ly = header_h + pad + qr_img.height + (footer_h - 18) // 2
-    draw.text(((W - lw) / 2, ly), label, fill=accent, font=sfont)
-
-    return canvas
-
-
-def _apply_custom_frame(qr_img, frame_path: str):
-    """Tempel QR di tengah gambar frame custom (jaga rasio & padding)."""
-    from PIL import Image
-    frame = Image.open(frame_path).convert("RGB")
-    # Skalakan QR jadi ~60% dari sisi terpendek frame
-    target = int(min(frame.size) * 0.6)
-    qr = qr_img.resize((target, target), Image.LANCZOS)
-    fx = (frame.width - target) // 2
-    fy = (frame.height - target) // 2
-    frame.paste(qr, (fx, fy))
-    return frame
 
 
 def generate_qris_image(
@@ -292,18 +242,10 @@ def generate_qris_image(
     untuk kompatibilitas call-site lama). Ukuran akhir gambar dipaksa mengecil sesuai
     preset supaya di Telegram tidak muncul kegedean.
     """
-    from PIL import Image
+    from config import settings
 
     qr_img, cfg = _render_qr(payload, size=size)
-
-    # Paksa ukuran final agar gambar keseluruhan (bukan cuma QR) ikut kecil.
-    target = cfg["final"]
-    if max(qr_img.size) != target:
-        ratio = target / max(qr_img.size)
-        qr_img = qr_img.resize(
-            (max(1, int(qr_img.width * ratio)), max(1, int(qr_img.height * ratio))),
-            Image.LANCZOS,
-        )
+    qr_img = _resize_to_width_limit(qr_img, cfg["final"], settings.QRIS_MAX_IMAGE_WIDTH)
 
     qr_img.save(out_path, format="PNG", optimize=True)
     return out_path
