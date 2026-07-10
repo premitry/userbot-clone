@@ -284,19 +284,7 @@
           <input type="hidden" id="m-qris-size" value="small">
           <p class="uc-hint">Default kecil supaya QR tidak makan tempat di chat. Semua ukuran tetap tajam & mudah discan.</p>
 
-          <label class="uc-label" style="margin-top:12px;">Frame / Template QRIS</label>
-          <div class="uc-inline" style="flex-wrap:wrap;gap:6px;">
-            <button type="button" class="uc-sbtn" onclick="setQrisFrame('none')" id="qris-fr-none">⬜ Tanpa frame</button>
-            <button type="button" class="uc-sbtn" onclick="setQrisFrame('classic')" id="qris-fr-classic">🖼️ Classic</button>
-            <button type="button" class="uc-sbtn" onclick="setQrisFrame('modern')" id="qris-fr-modern">🎨 Modern</button>
-            <button type="button" class="uc-sbtn" onclick="setQrisFrame('minimal')" id="qris-fr-minimal">✨ Minimal</button>
-          </div>
-          <div class="uc-inline" style="gap:6px;margin-top:6px;">
-            <input type="file" id="m-qris-frame-file" accept="image/*" class="uc-file" style="flex:0 0 auto;">
-            <button type="button" onclick="uploadQrisFrame()" class="uc-sbtn" style="flex:0 0 auto;">Upload frame custom</button>
-          </div>
-          <input type="text" id="m-qris-frame" class="uc-input mono" style="margin-top:6px;" placeholder="none / classic / modern / minimal / URL gambar frame" value="none">
-          <p class="uc-hint">Frame custom: upload PNG (transparan/solid) — QR akan ditempel di tengah otomatis. Kosongkan pakai "none".</p>
+          <input type="hidden" id="m-qris-frame" value="none">
 
           <label class="uc-label" style="margin-top:12px;">Teks tambahan di bawah QRIS (footer) — bisa custom bebas</label>
           <textarea id="m-qris-footer" rows="4" class="uc-input" placeholder="Tulis pesan apa pun di sini, atau pilih preset di bawah lalu edit sesukanya…"></textarea>
@@ -454,28 +442,6 @@ function setQrisSize(sz) {
         if (b) b.classList.toggle('active', s === sz);
     });
 }
-function setQrisFrame(fr) {
-    document.getElementById('m-qris-frame').value = fr;
-    ['none','classic','modern','minimal'].forEach(function(s){
-        var b = document.getElementById('qris-fr-' + s);
-        if (b) b.classList.toggle('active', s === fr);
-    });
-}
-
-async function uploadQrisFrame() {
-    var input = document.getElementById('m-qris-frame-file');
-    if (!input.files || !input.files.length) { alert('Pilih file frame dulu.'); return; }
-    var fd = new FormData(); fd.append('file', input.files[0]);
-    try {
-        var res = await fetch('/api/messages/upload', { method: 'POST', body: fd });
-        var d = await res.json();
-        if (!res.ok) throw new Error(d.detail || 'Upload gagal');
-        document.getElementById('m-qris-frame').value = d.url;
-        ['none','classic','modern','minimal'].forEach(function(s){
-            var b = document.getElementById('qris-fr-' + s); if (b) b.classList.remove('active');
-        });
-    } catch(e) { alert(e.message); }
-}
 
 function setQrisMode(mode) {
     var wrap = document.getElementById('qris-ttl-wrap');
@@ -630,15 +596,7 @@ function openEdit(id) {
         setQrisMode('perm');
     }
     document.getElementById('m-qris-footer').value = m.qris_footer_text || '';
-    var frameVal = m.qris_frame || 'none';
-    document.getElementById('m-qris-frame').value = frameVal;
-    if (['none','classic','modern','minimal'].indexOf(frameVal) !== -1) {
-        setQrisFrame(frameVal);
-    } else {
-        ['none','classic','modern','minimal'].forEach(function(s){
-            var b = document.getElementById('qris-fr-' + s); if (b) b.classList.remove('active');
-        });
-    }
+    document.getElementById('m-qris-frame').value = 'none';
     setQrisSize(m.qris_size || 'small');
     STEPS = [];
     if (m.steps) {

@@ -188,9 +188,9 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
 
 
 _SIZE_PRESET = {
-    "small": {"box": 6, "border": 2, "final": 520},
-    "medium": {"box": 8, "border": 3, "final": 680},
-    "large": {"box": 10, "border": 4, "final": 860},
+    "small": {"box": 6, "border": 2, "final": 280},
+    "medium": {"box": 8, "border": 3, "final": 380},
+    "large": {"box": 10, "border": 4, "final": 500},
 }
 
 _FRAME_PRESETS = ("none", "classic", "modern", "minimal")
@@ -288,46 +288,23 @@ def generate_qris_image(
     frame: str = "none",
     size: str = "small",
 ) -> str:
-    """Generate gambar QRIS. Support frame preset (classic/modern/minimal) atau URL frame custom."""
+    """Generate gambar QRIS polos. Parameter `frame` sudah tidak dipakai (dipertahankan
+    untuk kompatibilitas call-site lama). Ukuran akhir gambar dipaksa mengecil sesuai
+    preset supaya di Telegram tidak muncul kegedean.
+    """
     from PIL import Image
 
     qr_img, cfg = _render_qr(payload, size=size)
-    frame = (frame or "none").strip()
 
-    final_img = qr_img
-    if frame and frame != "none":
-        if frame in _FRAME_PRESETS:
-            final_img = _draw_preset_frame(qr_img, frame, cfg)
-        else:
-            # Anggap URL/path custom. /static/... → relatif; http(s) → download sementara.
-            try:
-                if frame.startswith("http://") or frame.startswith("https://"):
-                    import httpx, uuid as _uuid
-                    tmp = f"/tmp/qris_frame_{_uuid.uuid4().hex}.png"
-                    r = httpx.get(frame, timeout=10)
-                    with open(tmp, "wb") as f:
-                        f.write(r.content)
-                    final_img = _apply_custom_frame(qr_img, tmp)
-                    try:
-                        import os as _os
-                        _os.remove(tmp)
-                    except Exception:
-                        pass
-                else:
-                    local = frame.lstrip("/")
-                    final_img = _apply_custom_frame(qr_img, local)
-            except Exception:
-                # Fallback: kirim QR polos kalau frame gagal dibaca
-                final_img = qr_img
-
-    # Batasi ukuran max sesuai preset supaya tidak terlalu besar
-    max_side = cfg["final"]
-    if max(final_img.size) > max_side:
-        ratio = max_side / max(final_img.size)
-        final_img = final_img.resize(
-            (int(final_img.width * ratio), int(final_img.height * ratio)),
+    # Paksa ukuran final agar gambar keseluruhan (bukan cuma QR) ikut kecil.
+    target = cfg["final"]
+    if max(qr_img.size) != target:
+        ratio = target / max(qr_img.size)
+        qr_img = qr_img.resize(
+            (max(1, int(qr_img.width * ratio)), max(1, int(qr_img.height * ratio))),
             Image.LANCZOS,
         )
 
-    final_img.save(out_path, format="PNG", optimize=True)
+    qr_img.save(out_path, format="PNG", optimize=True)
     return out_path
+
