@@ -137,8 +137,8 @@
                 .then(function (d) {
                     if (!d) return;
                     if (d.app_name) {
-                        var b = document.getElementById('sb-brand');
-                        if (b) b.textContent = d.app_name;
+                        var b = document.getElementById('sb-brand'); if (b) b.textContent = d.app_name;
+                        var bm = document.getElementById('sb-brand-mobile'); if (bm) bm.textContent = d.app_name;
                     }
                     if (d.favicon_url) {
                         var link = document.querySelector('link[rel="icon"]');
