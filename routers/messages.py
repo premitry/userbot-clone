@@ -189,7 +189,7 @@ def update_message(message_id: int, body: MessageUpdate, db: Session = Depends(g
             raise HTTPException(400, str(e))
     for field in ("name", "type", "action", "content", "media_url", "channel_post_url",
                   "channel_mode", "channel_chat_id", "qris_payload", "qris_min", "qris_max",
-                  "qris_auto_delete_seconds", "qris_footer_text", "is_active"):
+                  "qris_auto_delete_seconds", "qris_footer_text", "qris_frame", "qris_size", "is_active"):
         val = getattr(body, field)
         if field == "qris_payload" and val is not None:
             val = qris_payload
