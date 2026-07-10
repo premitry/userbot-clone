@@ -185,7 +185,11 @@ async def _execute(client, message, msg, arg, db):
                 payload = build_dynamic_qris(base, amount)
             else:
                 payload = base
-            img_path = generate_qris_image(payload)
+            img_path = generate_qris_image(
+                payload,
+                frame=(getattr(msg, "qris_frame", None) or "none"),
+                size=(getattr(msg, "qris_size", None) or "small"),
+            )
         except ValueError as e:
             try:
                 await message.edit_text(f"\u26a0\ufe0f {e}")
