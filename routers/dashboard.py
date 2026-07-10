@@ -155,12 +155,12 @@ def page_campaign(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/auto-share", response_class=HTMLResponse)
 def page_autoshare(request: Request, db: Session = Depends(get_db)):
-    return _render(request, db, "schedules.html")
+    return RedirectResponse("/campaign")
 
 
 @router.get("/schedules", response_class=HTMLResponse)
 def page_schedules(request: Request, db: Session = Depends(get_db)):
-    return RedirectResponse("/auto-share")
+    return RedirectResponse("/campaign")
 
 
 @router.get("/queue", response_class=HTMLResponse)
