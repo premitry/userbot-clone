@@ -368,6 +368,8 @@ class MessageResponse(BaseModel):
     qris_max: Optional[int] = None
     qris_auto_delete_seconds: Optional[int] = 0
     qris_footer_text: Optional[str] = None
+    qris_frame: Optional[str] = "none"
+    qris_size: Optional[str] = "small"
     is_active: bool
     created_at: datetime
     steps: list[WorkflowStepResponse] = []
