@@ -24,26 +24,60 @@ def _crc16(payload: str) -> str:
     return format(crc, "04X")
 
 
-def parse_amount(text: str, allow_short: bool = False) -> int:
-    """STRICT: hanya menerima string digit murni (angka penuh).
+def parse_amount(text: str, allow_short: bool = True) -> int:
+    """Robust parser: angka penuh + shortcut (k/rb/jt/juta/m), toggle via allow_short.
 
-    Diterima: '10000', '25000', '50000', 10000 (int)
-    Ditolak: '5k', '5K', '10rb', '25.000', '25,000', 'Rp10000', 'abc'
-
-    allow_short param diabaikan (untuk kompatibilitas backward call site).
+    Diterima bila allow_short=True:
+      '10000', '25.000', '25,000', '10k', '10.5k', '2.5jt', '1jt', 'Rp 10k', '10rb'
+    Bila allow_short=False: hanya angka penuh (boleh pakai pemisah ribuan '.'/','),
+    suffix k/rb/jt/juta/m akan ditolak.
     """
     t = "" if text is None else str(text)
-    t = t.strip()
-    # buang karakter invisible yang kadang ikut ter-kirim dari keyboard HP (BOM, zero-width, dll)
+    t = t.strip().lower()
     for ch in ("\u200b", "\u200c", "\u200d", "\ufeff", "\u2060"):
         t = t.replace(ch, "")
     t = t.strip()
-    if not t.isdigit():
-        raise ValueError("Format nominal tidak valid. Gunakan angka penuh, contoh: /qris 10000")
-    amount_int = int(t)
+    if t.startswith("rp"):
+        t = t[2:].strip()
+    if not t:
+        raise ValueError("Nominal kosong. Contoh: /qris 10000 atau /qris 10k")
+
+    mult = 1
+    suffixes = [
+        ("juta", 1000000),
+        ("jt", 1000000),
+        ("ribu", 1000),
+        ("rb", 1000),
+        ("k", 1000),
+        ("m", 1000000),
+    ]
+    matched = None
+    for suf, factor in suffixes:
+        if t.endswith(suf):
+            t = t[:-len(suf)].strip()
+            mult = factor
+            matched = suf
+            break
+
+    if matched and not allow_short:
+        raise ValueError("Format singkat (5k/25rb) dinonaktifkan. Pakai angka penuh, mis. /qris 5000")
+
+    if mult > 1:
+        t = t.replace(",", ".")
+        try:
+            amount_int = int(float(t) * mult)
+        except ValueError:
+            raise ValueError(f"Format nominal tidak valid: {text}. Contoh: /qris 10000 atau /qris 10k")
+    else:
+        t = t.replace(".", "").replace(",", "")
+        if not t.isdigit():
+            raise ValueError(f"Format nominal tidak valid: {text}. Contoh: /qris 10000 atau /qris 10k")
+        amount_int = int(t)
+
     if amount_int <= 0:
         raise ValueError("Nominal harus lebih dari 0")
     return amount_int
+
 
 
 def _parse_tlv(s: str):
