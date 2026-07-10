@@ -324,6 +324,8 @@ class MessageCreate(BaseModel):
     qris_max: Optional[int] = None
     qris_auto_delete_seconds: Optional[int] = 0
     qris_footer_text: Optional[str] = None
+    qris_frame: Optional[str] = "none"
+    qris_size: Optional[str] = "small"
     is_active: Optional[bool] = True
     steps: Optional[list[WorkflowStepIn]] = None
 
