@@ -447,7 +447,34 @@ function fillQrisFooter(n) {
     ta.focus();
 }
 
-function setQrisMode(mode) {
+function setQrisSize(sz) {
+    document.getElementById('m-qris-size').value = sz;
+    ['small','medium','large'].forEach(function(s){
+        var b = document.getElementById('qris-size-' + s);
+        if (b) b.classList.toggle('active', s === sz);
+    });
+}
+function setQrisFrame(fr) {
+    document.getElementById('m-qris-frame').value = fr;
+    ['none','classic','modern','minimal'].forEach(function(s){
+        var b = document.getElementById('qris-fr-' + s);
+        if (b) b.classList.toggle('active', s === fr);
+    });
+}
+async function uploadQrisFrame() {
+    var input = document.getElementById('m-qris-frame-file');
+    if (!input.files || !input.files.length) { alert('Pilih file frame dulu.'); return; }
+    var fd = new FormData(); fd.append('file', input.files[0]);
+    try {
+        var res = await fetch('/api/messages/upload', { method: 'POST', body: fd });
+        var d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'Upload gagal');
+        document.getElementById('m-qris-frame').value = d.url;
+        ['none','classic','modern','minimal'].forEach(function(s){
+            var b = document.getElementById('qris-fr-' + s); if (b) b.classList.remove('active');
+        });
+    } catch(e) { alert(e.message); }
+}
     var wrap = document.getElementById('qris-ttl-wrap');
     var bP = document.getElementById('qris-mode-perm');
     var bA = document.getElementById('qris-mode-auto');
