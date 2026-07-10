@@ -79,6 +79,7 @@
 .uc-sbtn:hover{background:var(--c-sch);}
 .uc-sbtn:active{transform:translate(3px,3px);box-shadow:none;}
 .uc-sbtn.danger{flex:0 0 auto;background:var(--c-errc);color:var(--c-oerrc);}
+.uc-sbtn.active{background:var(--c-sch);transform:translate(3px,3px);box-shadow:none;}
 .uc-sbtn.danger:hover{background:var(--c-err);color:#fff;}
 
 .uc-h3{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 12px;}
@@ -252,24 +253,37 @@
           <p id="qris-decode-status" class="uc-hint">Upload gambar QRIS statis → payload dibaca otomatis. Atau paste payload manual.</p>
           <p class="uc-hint">Command manual bebas nominal: /qris 5000, /qris 5k, /qris 25.000. Caption boleh pakai {amount} dan {amount_rp}.</p>
 
-          <label class="uc-label" style="margin-top:12px;">Auto-hapus pesan QRIS (detik)</label>
-          <div class="uc-inline">
-            <input type="number" id="m-qris-ttl" min="0" step="10" placeholder="0 = tidak dihapus" class="uc-input" style="flex:1;">
-            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=60" style="flex:0 0 auto;">1 mnt</button>
-            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=300" style="flex:0 0 auto;">5 mnt</button>
-            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=600" style="flex:0 0 auto;">10 mnt</button>
-            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=0" style="flex:0 0 auto;">Off</button>
+          <label class="uc-label" style="margin-top:12px;">Masa berlaku pesan QRIS</label>
+          <div class="uc-inline" style="gap:6px;">
+            <button type="button" id="qris-mode-perm" class="uc-sbtn" onclick="setQrisMode('perm')" style="flex:1;">🔒 Permanen</button>
+            <button type="button" id="qris-mode-auto" class="uc-sbtn" onclick="setQrisMode('auto')" style="flex:1;">⏱️ Auto-hapus</button>
           </div>
-          <p class="uc-hint">Isi 0 (atau kosong) supaya QRIS tetap ada tanpa dihapus.</p>
+          <div id="qris-ttl-wrap" class="hidden" style="margin-top:8px;">
+            <div class="uc-inline" style="gap:8px;align-items:center;">
+              <input type="range" id="m-qris-ttl-range" min="1" max="60" step="1" value="5" style="flex:1;" oninput="syncTtlFromRange()">
+              <input type="number" id="m-qris-ttl-min" min="1" step="1" value="5" class="uc-input" style="flex:0 0 90px;" oninput="syncTtlFromInput()">
+              <span class="uc-hint" style="margin:0;">menit</span>
+            </div>
+            <div class="uc-inline" style="flex-wrap:wrap;gap:6px;margin-top:6px;">
+              <button type="button" class="uc-sbtn" onclick="setTtlMinutes(1)">1 mnt</button>
+              <button type="button" class="uc-sbtn" onclick="setTtlMinutes(5)">5 mnt</button>
+              <button type="button" class="uc-sbtn" onclick="setTtlMinutes(10)">10 mnt</button>
+              <button type="button" class="uc-sbtn" onclick="setTtlMinutes(30)">30 mnt</button>
+              <button type="button" class="uc-sbtn" onclick="setTtlMinutes(60)">1 jam</button>
+            </div>
+          </div>
+          <input type="hidden" id="m-qris-ttl" value="0">
+          <p class="uc-hint">Permanen = QRIS tidak dihapus. Auto-hapus = pesan QRIS otomatis terhapus setelah waktu yg dipilih.</p>
 
-          <label class="uc-label" style="margin-top:12px;">Teks tambahan di bawah QRIS (footer)</label>
-          <textarea id="m-qris-footer" rows="3" class="uc-input" placeholder="Contoh: 💳 Silakan scan QRIS di atas..."></textarea>
+          <label class="uc-label" style="margin-top:12px;">Teks tambahan di bawah QRIS (footer) — bisa custom bebas</label>
+          <textarea id="m-qris-footer" rows="4" class="uc-input" placeholder="Tulis pesan apa pun di sini, atau klik tombol contoh di bawah lalu edit sesukanya…"></textarea>
           <div class="uc-inline" style="flex-wrap:wrap;gap:6px;">
-            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(1)">Contoh 1</button>
-            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(2)">Contoh 2</button>
-            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(3)">Contoh 3</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(1)">📋 Contoh 1</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(2)">📋 Contoh 2</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(3)">📋 Contoh 3</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-footer').value=''">🧹 Kosongkan</button>
           </div>
-          <p class="uc-hint">Boleh pakai {amount} dan {amount_rp}. Kosongkan kalau tidak mau footer.</p>
+          <p class="uc-hint">Contoh cuma template awal — setelah diklik, teksnya bebas kamu edit / tulis ulang. Boleh pakai {amount} dan {amount_rp}.</p>
         </div>
 
         <div id="wrap-workflow" class="hidden uc-field">
@@ -406,6 +420,42 @@ var QRIS_FOOTER_PRESETS = {
 function fillQrisFooter(n) {
     var ta = document.getElementById('m-qris-footer');
     ta.value = QRIS_FOOTER_PRESETS[n] || '';
+    ta.focus();
+}
+
+function setQrisMode(mode) {
+    var wrap = document.getElementById('qris-ttl-wrap');
+    var bP = document.getElementById('qris-mode-perm');
+    var bA = document.getElementById('qris-mode-auto');
+    var hidden = document.getElementById('m-qris-ttl');
+    if (mode === 'auto') {
+        wrap.classList.remove('hidden');
+        bA.classList.add('active'); bP.classList.remove('active');
+        var mins = parseInt(document.getElementById('m-qris-ttl-min').value || '5', 10) || 5;
+        hidden.value = String(mins * 60);
+    } else {
+        wrap.classList.add('hidden');
+        bP.classList.add('active'); bA.classList.remove('active');
+        hidden.value = '0';
+    }
+}
+function syncTtlFromRange() {
+    var v = document.getElementById('m-qris-ttl-range').value;
+    document.getElementById('m-qris-ttl-min').value = v;
+    document.getElementById('m-qris-ttl').value = String(parseInt(v, 10) * 60);
+}
+function syncTtlFromInput() {
+    var v = parseInt(document.getElementById('m-qris-ttl-min').value || '1', 10);
+    if (!v || v < 1) v = 1;
+    if (v > 1440) v = 1440;
+    document.getElementById('m-qris-ttl-min').value = v;
+    if (v <= 60) document.getElementById('m-qris-ttl-range').value = v;
+    document.getElementById('m-qris-ttl').value = String(v * 60);
+}
+function setTtlMinutes(v) {
+    document.getElementById('m-qris-ttl-min').value = v;
+    if (v <= 60) document.getElementById('m-qris-ttl-range').value = v;
+    document.getElementById('m-qris-ttl').value = String(v * 60);
 }
 
 
@@ -475,6 +525,7 @@ function resetForm() {
     document.getElementById('qris-decode-status').textContent = 'Upload gambar QRIS statis → payload dibaca otomatis. Atau paste payload manual.';
     STEPS = [];
     renderSteps();
+    setQrisMode('perm');
     onTypeChange();
 }
 
@@ -500,7 +551,14 @@ function openEdit(id) {
     document.getElementById('m-channel').value = m.channel_post_url || '';
     document.getElementById('m-channel-mode').value = m.channel_mode || 'specific';
     document.getElementById('m-qpayload').value = m.qris_payload || '';
-    document.getElementById('m-qris-ttl').value = (m.qris_auto_delete_seconds != null ? m.qris_auto_delete_seconds : 0);
+    var ttlSec = (m.qris_auto_delete_seconds != null ? parseInt(m.qris_auto_delete_seconds, 10) : 0) || 0;
+    if (ttlSec > 0) {
+        var mins = Math.max(1, Math.round(ttlSec / 60));
+        setTtlMinutes(mins);
+        setQrisMode('auto');
+    } else {
+        setQrisMode('perm');
+    }
     document.getElementById('m-qris-footer').value = m.qris_footer_text || '';
     STEPS = [];
     if (m.steps) {
