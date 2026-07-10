@@ -613,6 +613,16 @@ function openEdit(id) {
         setQrisMode('perm');
     }
     document.getElementById('m-qris-footer').value = m.qris_footer_text || '';
+    var frameVal = m.qris_frame || 'none';
+    document.getElementById('m-qris-frame').value = frameVal;
+    if (['none','classic','modern','minimal'].indexOf(frameVal) !== -1) {
+        setQrisFrame(frameVal);
+    } else {
+        ['none','classic','modern','minimal'].forEach(function(s){
+            var b = document.getElementById('qris-fr-' + s); if (b) b.classList.remove('active');
+        });
+    }
+    setQrisSize(m.qris_size || 'small');
     STEPS = [];
     if (m.steps) {
         for (var k = 0; k < m.steps.length; k++) {
