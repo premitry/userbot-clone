@@ -146,21 +146,13 @@ code{ font-family:'Space Mono',monospace; font-size:0.75rem; }
 .nb-iconbtn:hover{ box-shadow:2px 2px 0 0 var(--shadow); }
 
 @media (max-width: 767px){
-  /* Mobile behaves like desktop: sidebar is a narrow icon strip that can expand.
-     Default = collapsed (icon-only) to keep content readable. */
-  .nb-sidebar-aside{ width:3.75rem; }
-  .nb-main{ margin-left:3.75rem; }
-  :not(.sb-collapsed) > body .nb-sidebar-aside{ width:13rem; }
-
-  /* When body has .sb-collapsed (default on mobile via JS) */
+  /* Mobile behaves like desktop but tighter widths. Default state
+     is icon-only (JS applies .sb-collapsed on first load for mobile). */
+  .nb-sidebar-aside{ width:13rem; }
+  .nb-main{ margin-left:13rem; }
   .sb-collapsed .nb-sidebar-aside{ width:3.75rem; }
   .sb-collapsed .nb-main{ margin-left:3.75rem; }
-
-  /* Expanded on mobile */
-  html:not(.sb-collapsed) .nb-sidebar-aside{ width:13rem; }
-  html:not(.sb-collapsed) .nb-main{ margin-left:13rem; }
-
   .nb-sidebar-head{ padding-left:0.5rem !important; padding-right:0.5rem !important; }
-  #app-main{ padding-left:0.6rem; padding-right:0.6rem; }
+  #app-main{ padding-left:0.6rem; padding-right:0.6rem; padding-top:3rem; }
 }
 
