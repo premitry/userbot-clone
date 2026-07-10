@@ -145,21 +145,22 @@ code{ font-family:'Space Mono',monospace; font-size:0.75rem; }
 .nb-iconbtn{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border:var(--bw) solid var(--border); background:var(--card-2); color:var(--text); border-radius:0; cursor:pointer; }
 .nb-iconbtn:hover{ box-shadow:2px 2px 0 0 var(--shadow); }
 
-/* Mobile top bar */
-.nb-mobilebar{ display:none; position:sticky; top:0; z-index:50; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.6rem 0.85rem; background:var(--card); border-bottom:var(--bw) solid var(--border); }
-.nb-backdrop{ display:none; position:fixed; inset:0; background:rgba(10,14,24,.55); backdrop-filter:blur(2px); z-index:39; }
-
 @media (max-width: 767px){
-  .nb-mobilebar{ display:flex; }
-  .nb-main{ margin-left:0 !important; }
-  .nb-sidebar-aside{ transform:translateX(-105%); width:17rem !important; box-shadow:8px 0 0 0 var(--shadow); }
-  .sb-mobile-open .nb-sidebar-aside{ transform:translateX(0); }
-  .sb-mobile-open .nb-backdrop{ display:block; }
-  /* Sidebar always shows labels on mobile drawer */
-  .sb-collapsed .nb-sb-label{ display:inline !important; }
-  .sb-collapsed .nav-link{ justify-content:flex-start; padding:0.55rem 0.7rem; }
-  .sb-collapsed .nb-sidebar-head{ justify-content:space-between; padding-left:1.25rem; padding-right:1.25rem; }
-  /* Content breathing room on mobile */
-  #app-main{ padding-left:0.75rem; padding-right:0.75rem; }
+  /* Mobile behaves like desktop: sidebar is a narrow icon strip that can expand.
+     Default = collapsed (icon-only) to keep content readable. */
+  .nb-sidebar-aside{ width:3.75rem; }
+  .nb-main{ margin-left:3.75rem; }
+  :not(.sb-collapsed) > body .nb-sidebar-aside{ width:13rem; }
+
+  /* When body has .sb-collapsed (default on mobile via JS) */
+  .sb-collapsed .nb-sidebar-aside{ width:3.75rem; }
+  .sb-collapsed .nb-main{ margin-left:3.75rem; }
+
+  /* Expanded on mobile */
+  html:not(.sb-collapsed) .nb-sidebar-aside{ width:13rem; }
+  html:not(.sb-collapsed) .nb-main{ margin-left:13rem; }
+
+  .nb-sidebar-head{ padding-left:0.5rem !important; padding-right:0.5rem !important; }
+  #app-main{ padding-left:0.6rem; padding-right:0.6rem; }
 }
 
