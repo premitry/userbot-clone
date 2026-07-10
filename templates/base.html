@@ -45,29 +45,47 @@
     <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans antialiased">
-    <button onclick="toggleTheme()" class="nb-theme-toggle" title="Dark / Light" aria-label="Toggle tema" style="position:fixed;top:16px;right:16px;z-index:60;width:auto;padding:8px 12px;">
+    <script>(function(){try{if(localStorage.getItem('ub-sb')==='1'){document.documentElement.classList.add('sb-collapsed');}}catch(e){}})();</script>
+
+    <!-- Mobile top bar -->
+    <div class="nb-mobilebar md:hidden">
+        <button onclick="mobileSbOpen()" class="nb-iconbtn" aria-label="Buka menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        <span class="font-display font-bold text-sm truncate" id="sb-brand-mobile">Userbot</span>
+        <button onclick="toggleTheme()" class="nb-iconbtn" aria-label="Toggle tema">
+            <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
+            <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
+        </button>
+    </div>
+
+    <button onclick="toggleTheme()" class="nb-theme-toggle hidden md:flex" title="Dark / Light" aria-label="Toggle tema" style="position:fixed;top:16px;right:16px;z-index:60;width:auto;padding:8px 12px;">
         <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
         <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
     </button>
 
-    <div class="flex min-h-screen">
-        <aside class="w-64 flex flex-col fixed h-full z-40 nb-sidebar">
-            <div class="px-5 py-5 nb-sidebar-head">
-                <h1 class="text-[15px] font-bold flex items-center gap-2.5 font-display">
-                    <span class="nb-logo"><i data-lucide="zap" class="w-4 h-4"></i></span>
-                    <span id="sb-brand">Userbot</span>
-                </h1>
-                <p class="text-xs text-gray-400 mt-1.5 pl-0.5 font-mono uppercase tracking-wide">Telegram Automation</p>
-            </div>
+    <div id="sb-backdrop" class="nb-backdrop" onclick="mobileSbClose()"></div>
 
-            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                <a href="/dashboard" class="nav-link {% block nav_dashboard %}{% endblock %}"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-                <a href="/accounts" class="nav-link {% block nav_accounts %}{% endblock %}"><i data-lucide="users"></i><span>Accounts</span></a>
-                <a href="/commands" class="nav-link {% block nav_messages %}{% endblock %}"><i data-lucide="terminal"></i><span>Commands</span></a>
-                <a href="/campaign" class="nav-link {% block nav_schedules %}{% endblock %}"><i data-lucide="megaphone"></i><span>Campaign</span></a>
-                <a href="/targets" class="nav-link {% block nav_targets %}{% endblock %}"><i data-lucide="target"></i><span>Targets</span></a>
-                <a href="/queue" class="nav-link {% block nav_queue %}{% endblock %}"><i data-lucide="list-checks"></i><span>Queue</span></a>
-                <a href="/settings" class="nav-link {% block nav_settings %}{% endblock %}"><i data-lucide="settings"></i><span>Settings</span></a>
+    <div class="flex min-h-screen">
+        <aside id="app-sidebar" class="nb-sidebar-aside flex flex-col fixed h-full z-40 nb-sidebar">
+            <div class="px-5 py-5 nb-sidebar-head flex items-center justify-between gap-2">
+                <h1 class="text-[15px] font-bold flex items-center gap-2.5 font-display min-w-0">
+                    <span class="nb-logo shrink-0"><i data-lucide="zap" class="w-4 h-4"></i></span>
+                    <span id="sb-brand" class="nb-sb-label truncate">Userbot</span>
+                </h1>
+                <button onclick="toggleSidebar()" class="nb-iconbtn shrink-0" aria-label="Ciutkan sidebar" title="Ciutkan / Perluas">
+                    <i data-lucide="panel-left-close" class="w-4 h-4 nb-sb-ico-close"></i>
+                    <i data-lucide="panel-left-open" class="w-4 h-4 nb-sb-ico-open"></i>
+                </button>
+            </div>
+            <p class="px-5 -mt-2 pb-3 text-xs text-gray-400 font-mono uppercase tracking-wide nb-sb-label">Telegram Automation</p>
+
+            <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+                <a href="/dashboard" class="nav-link {% block nav_dashboard %}{% endblock %}" title="Dashboard"><i data-lucide="layout-dashboard"></i><span class="nb-sb-label">Dashboard</span></a>
+                <a href="/accounts" class="nav-link {% block nav_accounts %}{% endblock %}" title="Accounts"><i data-lucide="users"></i><span class="nb-sb-label">Accounts</span></a>
+                <a href="/commands" class="nav-link {% block nav_messages %}{% endblock %}" title="Commands"><i data-lucide="terminal"></i><span class="nb-sb-label">Commands</span></a>
+                <a href="/campaign" class="nav-link {% block nav_schedules %}{% endblock %}" title="Campaign"><i data-lucide="megaphone"></i><span class="nb-sb-label">Campaign</span></a>
+                <a href="/targets" class="nav-link {% block nav_targets %}{% endblock %}" title="Targets"><i data-lucide="target"></i><span class="nb-sb-label">Targets</span></a>
+                <a href="/queue" class="nav-link {% block nav_queue %}{% endblock %}" title="Queue"><i data-lucide="list-checks"></i><span class="nb-sb-label">Queue</span></a>
+                <a href="/settings" class="nav-link {% block nav_settings %}{% endblock %}" title="Settings"><i data-lucide="settings"></i><span class="nb-sb-label">Settings</span></a>
             </nav>
 
             <div class="p-3 nb-sidebar-foot">
@@ -75,7 +93,7 @@
                 <div class="flex items-center justify-between gap-2 px-2 py-2 card" style="box-shadow:none;">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div id="sb-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 text-white" style="background:var(--primary);">U</div>
-                        <span id="sb-username" class="text-sm text-gray-300 truncate">User</span>
+                        <span id="sb-username" class="text-sm text-gray-300 truncate nb-sb-label">User</span>
                     </div>
                     <button onclick="logout()" title="Logout" class="text-gray-400 hover:text-red-400 shrink-0 p-1.5"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                 </div>
@@ -83,7 +101,7 @@
             </div>
         </aside>
 
-        <main id="app-main" class="flex-1 ml-64">
+        <main id="app-main" class="flex-1 nb-main">
             {% block content %}{% endblock %}
         </main>
     </div>
