@@ -461,6 +461,7 @@ function setQrisFrame(fr) {
         if (b) b.classList.toggle('active', s === fr);
     });
 }
+
 async function uploadQrisFrame() {
     var input = document.getElementById('m-qris-frame-file');
     if (!input.files || !input.files.length) { alert('Pilih file frame dulu.'); return; }
@@ -475,6 +476,8 @@ async function uploadQrisFrame() {
         });
     } catch(e) { alert(e.message); }
 }
+
+function setQrisMode(mode) {
     var wrap = document.getElementById('qris-ttl-wrap');
     var bP = document.getElementById('qris-mode-perm');
     var bA = document.getElementById('qris-mode-auto');
