@@ -87,7 +87,7 @@ class Settings:
     QRIS_SIZE_SMALL: int = _env_int("QRIS_SIZE_SMALL", 280, 128, 2048)
     QRIS_SIZE_MEDIUM: int = _env_int("QRIS_SIZE_MEDIUM", 380, 128, 2048)
     QRIS_SIZE_LARGE: int = _env_int("QRIS_SIZE_LARGE", 500, 128, 2048)
-    QRIS_MAX_IMAGE_WIDTH: int = _env_int("QRIS_MAX_IMAGE_WIDTH", 500, 128, 2048)
+    QRIS_MAX_IMAGE_WIDTH: int = _env_int("QRIS_MAX_IMAGE_WIDTH", 720, 128, 2048)
 
 
 settings = Settings()
