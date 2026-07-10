@@ -1,0 +1,58 @@
+# ============================================================
+# Caddyfile — Reverse Proxy untuk Telegram Userbot Manager
+# ------------------------------------------------------------
+# Cara pakai:
+#   1) Ganti "yourdomain.com" dengan domain kamu.
+#   2) Copy file ini ke /etc/caddy/Caddyfile
+#        sudo cp Caddyfile.example /etc/caddy/Caddyfile
+#   3) Reload Caddy
+#        sudo systemctl reload caddy
+#
+# SSL/HTTPS otomatis di-issue oleh Caddy via Let's Encrypt
+# selama domain sudah pointing ke IP VPS (A record) & port
+# 80 + 443 terbuka di firewall.
+# ============================================================
+
+yourdomain.com {
+    # Reverse proxy ke FastAPI (default port 8000 sesuai .env APP_PORT)
+    reverse_proxy 127.0.0.1:8000 {
+        # Header standar supaya app tahu client asli & scheme HTTPS
+        header_up Host              {host}
+        header_up X-Real-IP         {remote_host}
+        header_up X-Forwarded-For   {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Upload media (foto/video/dokumen) sampai 50MB
+    request_body {
+        max_size 50MB
+    }
+
+    # Kompresi respons (hemat bandwidth)
+    encode gzip zstd
+
+    # Log akses (opsional, comment kalau tidak perlu)
+    log {
+        output file /var/log/caddy/userbot-access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+        format console
+    }
+}
+
+# ------------------------------------------------------------
+# (Opsional) Redirect www -> root
+# ------------------------------------------------------------
+# www.yourdomain.com {
+#     redir https://yourdomain.com{uri} permanent
+# }
+
+# ------------------------------------------------------------
+# (Opsional) Pakai subdomain, mis. bot.yourdomain.com
+# ------------------------------------------------------------
+# bot.yourdomain.com {
+#     reverse_proxy 127.0.0.1:8000
+#     request_body { max_size 50MB }
+#     encode gzip zstd
+# }
