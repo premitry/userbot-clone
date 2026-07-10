@@ -187,9 +187,147 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
     return body + _crc16(body)
 
 
-def generate_qris_image(payload: str, out_path: str = "/tmp/qris_dynamic.png") -> str:
-    import qrcode
+_SIZE_PRESET = {
+    "small": {"box": 6, "border": 2, "final": 520},
+    "medium": {"box": 8, "border": 3, "final": 680},
+    "large": {"box": 10, "border": 4, "final": 860},
+}
 
-    img = qrcode.make(payload)
-    img.save(out_path)
+_FRAME_PRESETS = ("none", "classic", "modern", "minimal")
+
+
+def _render_qr(payload: str, size: str = "small"):
+    """Render QR code sebagai PIL.Image RGB dengan ukuran yg lebih kecil dari default."""
+    import qrcode
+    from qrcode.constants import ERROR_CORRECT_M
+
+    cfg = _SIZE_PRESET.get(size or "small", _SIZE_PRESET["small"])
+    qr = qrcode.QRCode(
+        error_correction=ERROR_CORRECT_M,
+        box_size=cfg["box"],
+        border=cfg["border"],
+    )
+    qr.add_data(payload)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+    return img, cfg
+
+
+def _draw_preset_frame(qr_img, preset: str, cfg: dict):
+    """Bungkus QR dengan frame preset sederhana (classic/modern/minimal)."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    pad = 40
+    header_h = 70 if preset != "minimal" else 0
+    footer_h = 60 if preset != "minimal" else 40
+    W = qr_img.width + pad * 2
+    H = qr_img.height + pad * 2 + header_h + footer_h
+
+    if preset == "modern":
+        bg = (245, 247, 252)
+        accent = (37, 99, 235)
+    elif preset == "classic":
+        bg = (255, 255, 255)
+        accent = (17, 24, 39)
+    else:  # minimal
+        bg = (255, 255, 255)
+        accent = (17, 24, 39)
+
+    canvas = Image.new("RGB", (W, H), bg)
+    draw = ImageDraw.Draw(canvas)
+
+    # Header bar
+    if header_h:
+        draw.rectangle([0, 0, W, header_h], fill=accent)
+        try:
+            font = ImageFont.truetype("DejaVuSans-Bold.ttf", 28)
+        except Exception:
+            font = ImageFont.load_default()
+        title = "QRIS"
+        tw = draw.textlength(title, font=font)
+        draw.text(((W - tw) / 2, (header_h - 30) / 2), title, fill="white", font=font)
+
+    # QR box
+    qx = pad
+    qy = header_h + pad
+    # Card behind QR for modern
+    if preset == "modern":
+        card = Image.new("RGB", (qr_img.width + 16, qr_img.height + 16), "white")
+        canvas.paste(card, (qx - 8, qy - 8))
+    canvas.paste(qr_img, (qx, qy))
+
+    # Footer
+    try:
+        sfont = ImageFont.truetype("DejaVuSans.ttf", 18)
+    except Exception:
+        sfont = ImageFont.load_default()
+    label = "Scan untuk membayar"
+    lw = draw.textlength(label, font=sfont)
+    ly = header_h + pad + qr_img.height + (footer_h - 18) // 2
+    draw.text(((W - lw) / 2, ly), label, fill=accent, font=sfont)
+
+    return canvas
+
+
+def _apply_custom_frame(qr_img, frame_path: str):
+    """Tempel QR di tengah gambar frame custom (jaga rasio & padding)."""
+    from PIL import Image
+    frame = Image.open(frame_path).convert("RGB")
+    # Skalakan QR jadi ~60% dari sisi terpendek frame
+    target = int(min(frame.size) * 0.6)
+    qr = qr_img.resize((target, target), Image.LANCZOS)
+    fx = (frame.width - target) // 2
+    fy = (frame.height - target) // 2
+    frame.paste(qr, (fx, fy))
+    return frame
+
+
+def generate_qris_image(
+    payload: str,
+    out_path: str = "/tmp/qris_dynamic.png",
+    frame: str = "none",
+    size: str = "small",
+) -> str:
+    """Generate gambar QRIS. Support frame preset (classic/modern/minimal) atau URL frame custom."""
+    from PIL import Image
+
+    qr_img, cfg = _render_qr(payload, size=size)
+    frame = (frame or "none").strip()
+
+    final_img = qr_img
+    if frame and frame != "none":
+        if frame in _FRAME_PRESETS:
+            final_img = _draw_preset_frame(qr_img, frame, cfg)
+        else:
+            # Anggap URL/path custom. /static/... → relatif; http(s) → download sementara.
+            try:
+                if frame.startswith("http://") or frame.startswith("https://"):
+                    import httpx, uuid as _uuid
+                    tmp = f"/tmp/qris_frame_{_uuid.uuid4().hex}.png"
+                    r = httpx.get(frame, timeout=10)
+                    with open(tmp, "wb") as f:
+                        f.write(r.content)
+                    final_img = _apply_custom_frame(qr_img, tmp)
+                    try:
+                        import os as _os
+                        _os.remove(tmp)
+                    except Exception:
+                        pass
+                else:
+                    local = frame.lstrip("/")
+                    final_img = _apply_custom_frame(qr_img, local)
+            except Exception:
+                # Fallback: kirim QR polos kalau frame gagal dibaca
+                final_img = qr_img
+
+    # Batasi ukuran max sesuai preset supaya tidak terlalu besar
+    max_side = cfg["final"]
+    if max(final_img.size) > max_side:
+        ratio = max_side / max(final_img.size)
+        final_img = final_img.resize(
+            (int(final_img.width * ratio), int(final_img.height * ratio)),
+            Image.LANCZOS,
+        )
+
+    final_img.save(out_path, format="PNG", optimize=True)
     return out_path

@@ -328,6 +328,10 @@ class Message(Base):
     qris_auto_delete_seconds = Column(Integer, nullable=True, default=0)
     # Teks tambahan yang ditempel di bawah caption QRIS (biar tidak polos)
     qris_footer_text = Column(Text, nullable=True)
+    # Frame QRIS: 'none' | 'classic' | 'modern' | 'minimal' | URL gambar custom (/static/... atau http)
+    qris_frame = Column(String(255), nullable=True, default="none")
+    # Ukuran QR: 'small' (default) | 'medium' | 'large'
+    qris_size = Column(String(20), nullable=True, default="small")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -85,6 +85,8 @@ _MIGRATIONS = {
         "qris_payload": "TEXT",
         "qris_auto_delete_seconds": "INTEGER DEFAULT 0",
         "qris_footer_text": "TEXT",
+        "qris_frame": "VARCHAR(255) DEFAULT 'none'",
+        "qris_size": "VARCHAR(20) DEFAULT 'small'",
         "channel_mode": "VARCHAR(20) DEFAULT 'specific'",
         "channel_chat_id": "VARCHAR(50)",
         "account_id": "INTEGER",
