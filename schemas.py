@@ -345,6 +345,8 @@ class MessageUpdate(BaseModel):
     qris_max: Optional[int] = None
     qris_auto_delete_seconds: Optional[int] = None
     qris_footer_text: Optional[str] = None
+    qris_frame: Optional[str] = None
+    qris_size: Optional[str] = None
     is_active: Optional[bool] = None
     steps: Optional[list[WorkflowStepIn]] = None
 
