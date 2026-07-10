@@ -123,3 +123,43 @@ code{ font-family:'Space Mono',monospace; font-size:0.75rem; }
 
 @keyframes slideIn{ from{ transform:translateY(8px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
 .animate-slide-in{ animation:slideIn 0.25s ease-out; }
+
+/* ===== Sidebar collapse + mobile drawer ===== */
+.nb-sidebar-aside{ width:16rem; transition:width .18s ease, transform .22s ease; }
+.nb-main{ margin-left:16rem; transition:margin-left .18s ease; min-width:0; }
+
+/* Collapsed (desktop) — icon only */
+.sb-collapsed .nb-sidebar-aside{ width:4.25rem; }
+.sb-collapsed .nb-main{ margin-left:4.25rem; }
+.sb-collapsed .nb-sb-label{ display:none !important; }
+.sb-collapsed .nb-sidebar-head{ padding-left:0.75rem; padding-right:0.75rem; justify-content:center; flex-wrap:wrap; }
+.sb-collapsed .nav-link{ justify-content:center; padding:0.55rem 0.4rem; }
+.sb-collapsed .nb-sidebar-foot .card{ justify-content:center; padding:0.4rem !important; }
+
+/* Toggle icon swap */
+.nb-sb-ico-open{ display:none; }
+.sb-collapsed .nb-sb-ico-close{ display:none; }
+.sb-collapsed .nb-sb-ico-open{ display:inline-block; }
+
+/* Icon button used in sidebar head + mobile bar */
+.nb-iconbtn{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border:var(--bw) solid var(--border); background:var(--card-2); color:var(--text); border-radius:0; cursor:pointer; }
+.nb-iconbtn:hover{ box-shadow:2px 2px 0 0 var(--shadow); }
+
+/* Mobile top bar */
+.nb-mobilebar{ display:none; position:sticky; top:0; z-index:50; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.6rem 0.85rem; background:var(--card); border-bottom:var(--bw) solid var(--border); }
+.nb-backdrop{ display:none; position:fixed; inset:0; background:rgba(10,14,24,.55); backdrop-filter:blur(2px); z-index:39; }
+
+@media (max-width: 767px){
+  .nb-mobilebar{ display:flex; }
+  .nb-main{ margin-left:0 !important; }
+  .nb-sidebar-aside{ transform:translateX(-105%); width:17rem !important; box-shadow:8px 0 0 0 var(--shadow); }
+  .sb-mobile-open .nb-sidebar-aside{ transform:translateX(0); }
+  .sb-mobile-open .nb-backdrop{ display:block; }
+  /* Sidebar always shows labels on mobile drawer */
+  .sb-collapsed .nb-sb-label{ display:inline !important; }
+  .sb-collapsed .nav-link{ justify-content:flex-start; padding:0.55rem 0.7rem; }
+  .sb-collapsed .nb-sidebar-head{ justify-content:space-between; padding-left:1.25rem; padding-right:1.25rem; }
+  /* Content breathing room on mobile */
+  #app-main{ padding-left:0.75rem; padding-right:0.75rem; }
+}
+
