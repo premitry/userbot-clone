@@ -131,21 +131,26 @@ def page_dashboard(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.get("/messages", response_class=HTMLResponse)
-def page_messages(request: Request, db: Session = Depends(get_db)):
+@router.get("/commands", response_class=HTMLResponse)
+def page_commands(request: Request, db: Session = Depends(get_db)):
     return _render(request, db, "messages.html")
 
 
-@router.get("/commands", response_class=HTMLResponse)
-def page_commands(request: Request, db: Session = Depends(get_db)):
-    # Commands digabung ke Messages
-    return RedirectResponse("/messages")
+@router.get("/messages", response_class=HTMLResponse)
+def page_messages(request: Request, db: Session = Depends(get_db)):
+    # Alias lama → arahkan ke /commands
+    return RedirectResponse("/commands")
 
 
 @router.get("/media", response_class=HTMLResponse)
 def page_media(request: Request, db: Session = Depends(get_db)):
-    # Menu Media dihapus — media sudah tergabung di Commands (Messages)
-    return RedirectResponse("/messages#media")
+    # Menu Media dihapus — media sudah tergabung di Commands
+    return RedirectResponse("/commands#media")
+
+
+@router.get("/campaign", response_class=HTMLResponse)
+def page_campaign(request: Request, db: Session = Depends(get_db)):
+    return _render(request, db, "schedules.html")
 
 
 @router.get("/auto-share", response_class=HTMLResponse)
