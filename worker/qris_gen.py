@@ -188,9 +188,9 @@ def build_dynamic_qris(base_payload: str, amount) -> str:
 
 
 _SIZE_PRESET = {
-    "small": {"box": 6, "border": 2, "final": 520},
-    "medium": {"box": 8, "border": 3, "final": 680},
-    "large": {"box": 10, "border": 4, "final": 860},
+    "small": {"box": 6, "border": 2, "final": 280},
+    "medium": {"box": 8, "border": 3, "final": 380},
+    "large": {"box": 10, "border": 4, "final": 500},
 }
 
 _FRAME_PRESETS = ("none", "classic", "modern", "minimal")
