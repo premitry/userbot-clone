@@ -64,7 +64,11 @@ async def _send_qris(client, chat_id, db, amount_text, caption_template, msg):
     except Exception:
         raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
     payload = build_dynamic_qris(base, amount)
-    img = generate_qris_image(payload)
+    img = generate_qris_image(
+        payload,
+        frame=(getattr(msg, "qris_frame", None) or "none"),
+        size=(getattr(msg, "qris_size", None) or "small"),
+    )
     cap = _qris_caption(caption_template, amount)
     try:
         await safe_send_photo(client, chat_id, img, cap)
