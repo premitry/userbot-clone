@@ -357,6 +357,99 @@ sudo certbot renew --dry-run
 
 ---
 
+## 🧩 Alternatif: Setup Caddy (SSL Otomatis)
+
+Kalau kamu tidak mau ribet dengan Nginx + Certbot, pakai **Caddy** — reverse proxy modern yang otomatis mengurus SSL Let's Encrypt tanpa konfigurasi tambahan.
+
+> **Pilih salah satu**: Nginx **ATAU** Caddy — jangan dua-duanya (bentrok di port 80/443).
+
+### 1. Install Caddy
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
+  sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
+  sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install -y caddy
+```
+
+### 2. Pastikan Domain Sudah Pointing ke VPS
+
+Di registrar domain (Cloudflare / Namecheap / dll), tambahkan **A record**:
+
+| Type | Name | Value             | TTL  |
+|------|------|-------------------|------|
+| A    | @    | `<IP VPS kamu>`   | Auto |
+| A    | www  | `<IP VPS kamu>`   | Auto |
+
+Cek propagasi: `dig yourdomain.com +short` — harus muncul IP VPS.
+
+> **Cloudflare user**: matikan dulu proxy (awan orange → abu-abu) saat pertama kali issue SSL. Setelah aktif, boleh dinyalakan lagi.
+
+### 3. Buat Caddyfile
+
+Sudah ada template siap pakai di repo: **`Caddyfile.example`**. Copy ke lokasi resmi Caddy:
+
+```bash
+sudo cp Caddyfile.example /etc/caddy/Caddyfile
+sudo nano /etc/caddy/Caddyfile   # ganti "yourdomain.com" dengan domain kamu
+```
+
+Isi minimal Caddyfile:
+
+```caddy
+yourdomain.com {
+    reverse_proxy 127.0.0.1:8000 {
+        header_up Host              {host}
+        header_up X-Real-IP         {remote_host}
+        header_up X-Forwarded-For   {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    request_body {
+        max_size 50MB
+    }
+
+    encode gzip zstd
+}
+```
+
+> `request_body { max_size 50MB }` wajib supaya upload media (foto/video/QRIS) tidak ditolak.
+> Caddy otomatis handle WebSocket (untuk QR Code login) tanpa header tambahan.
+
+### 4. Buka Firewall & Reload Caddy
+
+```bash
+sudo ufw allow 80,443/tcp
+sudo systemctl reload caddy
+sudo systemctl enable caddy
+```
+
+Cek status:
+
+```bash
+sudo systemctl status caddy
+sudo journalctl -u caddy -f    # tail log realtime
+```
+
+### 5. Selesai — Buka Browser
+
+Kunjungi `https://yourdomain.com` — SSL sudah aktif otomatis, tidak perlu certbot terpisah.
+
+### Update Config Setelah Edit
+
+```bash
+sudo systemctl reload caddy    # reload tanpa downtime
+# atau kalau ada error konfigurasi:
+sudo caddy validate --config /etc/caddy/Caddyfile
+```
+
+---
+
+
+
 ## 🔁 Update Project
 
 ```bash
