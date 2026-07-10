@@ -152,6 +152,8 @@ def create_message(body: MessageCreate, db: Session = Depends(get_db), user: Use
         qris_max=body.qris_max,
         qris_auto_delete_seconds=body.qris_auto_delete_seconds or 0,
         qris_footer_text=body.qris_footer_text,
+        qris_frame=body.qris_frame or "none",
+        qris_size=body.qris_size or "small",
         is_active=True if body.is_active is None else body.is_active,
     )
     db.add(m)
