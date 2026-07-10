@@ -251,6 +251,25 @@
           </div>
           <p id="qris-decode-status" class="uc-hint">Upload gambar QRIS statis → payload dibaca otomatis. Atau paste payload manual.</p>
           <p class="uc-hint">Command manual bebas nominal: /qris 5000, /qris 5k, /qris 25.000. Caption boleh pakai {amount} dan {amount_rp}.</p>
+
+          <label class="uc-label" style="margin-top:12px;">Auto-hapus pesan QRIS (detik)</label>
+          <div class="uc-inline">
+            <input type="number" id="m-qris-ttl" min="0" step="10" placeholder="0 = tidak dihapus" class="uc-input" style="flex:1;">
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=60" style="flex:0 0 auto;">1 mnt</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=300" style="flex:0 0 auto;">5 mnt</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=600" style="flex:0 0 auto;">10 mnt</button>
+            <button type="button" class="uc-sbtn" onclick="document.getElementById('m-qris-ttl').value=0" style="flex:0 0 auto;">Off</button>
+          </div>
+          <p class="uc-hint">Isi 0 (atau kosong) supaya QRIS tetap ada tanpa dihapus.</p>
+
+          <label class="uc-label" style="margin-top:12px;">Teks tambahan di bawah QRIS (footer)</label>
+          <textarea id="m-qris-footer" rows="3" class="uc-input" placeholder="Contoh: 💳 Silakan scan QRIS di atas..."></textarea>
+          <div class="uc-inline" style="flex-wrap:wrap;gap:6px;">
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(1)">Contoh 1</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(2)">Contoh 2</button>
+            <button type="button" class="uc-sbtn" onclick="fillQrisFooter(3)">Contoh 3</button>
+          </div>
+          <p class="uc-hint">Boleh pakai {amount} dan {amount_rp}. Kosongkan kalau tidak mau footer.</p>
         </div>
 
         <div id="wrap-workflow" class="hidden uc-field">
