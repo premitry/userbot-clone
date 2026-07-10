@@ -13,6 +13,21 @@ engine = create_engine(
     connect_args={"check_same_thread": False},  # SQLite only
 )
 
+# Optimasi SQLite (Mode WAL + Synchronous Normal) — hanya aktif kalau pakai SQLite.
+if "sqlite" in settings.DATABASE_URL:
+    from sqlalchemy import event
+
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+        except Exception as e:
+            logger.warning("Gagal mengaktifkan SQLite WAL/Synchronous: %s", e)
+        finally:
+            cursor.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
