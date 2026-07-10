@@ -111,6 +111,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         function toggleTheme(){ var d = document.documentElement.classList.toggle('dark'); try{ localStorage.setItem('ub-theme', d ? 'dark' : 'light'); }catch(e){} if (window.lucide && window.lucide.createIcons){ window.lucide.createIcons(); } }
+        function toggleSidebar(){ var c = document.documentElement.classList.toggle('sb-collapsed'); try{ localStorage.setItem('ub-sb', c ? '1' : '0'); }catch(e){} }
+        function mobileSbOpen(){ document.documentElement.classList.add('sb-mobile-open'); }
+        function mobileSbClose(){ document.documentElement.classList.remove('sb-mobile-open'); }
+        document.addEventListener('click', function(e){ var a = e.target && e.target.closest && e.target.closest('a.nav-link'); if(a){ mobileSbClose(); } });
 
         (function () {
             if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
