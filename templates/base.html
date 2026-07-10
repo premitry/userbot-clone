@@ -45,24 +45,12 @@
     <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans antialiased">
-    <script>(function(){try{if(localStorage.getItem('ub-sb')==='1'){document.documentElement.classList.add('sb-collapsed');}}catch(e){}})();</script>
+    <script>(function(){try{var v=localStorage.getItem('ub-sb');var isMobile=window.matchMedia('(max-width: 767px)').matches;if(v===null){if(isMobile){document.documentElement.classList.add('sb-collapsed');}}else if(v==='1'){document.documentElement.classList.add('sb-collapsed');}}catch(e){}})();</script>
 
-    <!-- Mobile top bar -->
-    <div class="nb-mobilebar md:hidden">
-        <button onclick="mobileSbOpen()" class="nb-iconbtn" aria-label="Buka menu"><i data-lucide="menu" class="w-5 h-5"></i></button>
-        <span class="font-display font-bold text-sm truncate" id="sb-brand-mobile">Userbot</span>
-        <button onclick="toggleTheme()" class="nb-iconbtn" aria-label="Toggle tema">
-            <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
-            <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
-        </button>
-    </div>
-
-    <button onclick="toggleTheme()" class="nb-theme-toggle hidden md:flex" title="Dark / Light" aria-label="Toggle tema" style="position:fixed;top:16px;right:16px;z-index:60;width:auto;padding:8px 12px;">
+    <button onclick="toggleTheme()" class="nb-theme-toggle" title="Dark / Light" aria-label="Toggle tema" style="position:fixed;top:12px;right:12px;z-index:60;width:auto;padding:6px 10px;">
         <i data-lucide="sun" class="w-4 h-4 theme-icon-light"></i>
         <i data-lucide="moon" class="w-4 h-4 theme-icon-dark"></i>
     </button>
-
-    <div id="sb-backdrop" class="nb-backdrop" onclick="mobileSbClose()"></div>
 
     <div class="flex min-h-screen">
         <aside id="app-sidebar" class="nb-sidebar-aside flex flex-col fixed h-full z-40 nb-sidebar">
