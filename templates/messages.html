@@ -397,6 +397,19 @@ async function decodeQris() {
     } catch (e) { s.textContent = '❌ Error decode. Paste payload manual.'; }
 }
 
+var QRIS_FOOTER_PRESETS = {
+    1: "💳 Silakan scan QRIS di atas untuk melakukan pembayaran.\n📌 Nominal: {amount_rp}\n⏳ QRIS berlaku beberapa menit saja, mohon segera diselesaikan.\n🙏 Terima kasih atas kepercayaannya!",
+    2: "✨ Pembayaran senilai {amount_rp}\n📲 Scan QRIS di atas via e-wallet / m-banking favoritmu (GoPay, OVO, DANA, ShopeePay, BCA, dll).\n📸 Setelah bayar, kirim bukti transfer ya.\n🚀 Pesanan langsung kami proses!",
+    3: "🧾 Total tagihan: {amount_rp}\n🔒 Aman & langsung masuk ke rekening kami.\n⏱️ Mohon selesaikan dalam waktu singkat sebelum QRIS ini kadaluarsa otomatis.\n💬 Kalau ada kendala, langsung chat admin ya."
+};
+
+function fillQrisFooter(n) {
+    var ta = document.getElementById('m-qris-footer');
+    ta.value = QRIS_FOOTER_PRESETS[n] || '';
+}
+
+
+
 function renderSteps() {
     var box = document.getElementById('steps-box');
     if (!STEPS.length) { box.innerHTML = '<p class="uc-hint">Belum ada step. Klik + Step.</p>'; return; }
