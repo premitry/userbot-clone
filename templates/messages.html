@@ -538,7 +538,9 @@ document.getElementById('msg-form').addEventListener('submit', async function (e
         channel_post_url: document.getElementById('m-channel').value || null,
         channel_mode: chMode,
         channel_chat_id: (chMode === 'specific') ? null : (chPick || null),
-        qris_payload: document.getElementById('m-qpayload').value || null
+        qris_payload: document.getElementById('m-qpayload').value || null,
+        qris_auto_delete_seconds: parseInt(document.getElementById('m-qris-ttl').value || '0', 10) || 0,
+        qris_footer_text: document.getElementById('m-qris-footer').value || null
     };
     if (type === 'workflow') { body.steps = STEPS; }
     var url = id ? ('/api/messages/' + id) : '/api/messages/';
