@@ -201,13 +201,31 @@ async def _execute(client, message, msg, arg, db):
         caption = None
         if content:
             caption = content.replace("{amount_rp}", rp).replace("{amount}", pretty)
+        footer = (msg.qris_footer_text or "").strip()
+        if footer:
+            footer = footer.replace("{amount_rp}", rp).replace("{amount}", pretty)
+            caption = (caption + "\n\n" + footer) if caption else footer
         try:
             await message.delete()
         except Exception:
             pass
-        await client.send_photo(chat_id, img_path, caption=caption)
+        sent = await client.send_photo(chat_id, img_path, caption=caption)
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
+        # Auto-delete QRIS setelah N detik (opsional)
+        try:
+            ttl = int(msg.qris_auto_delete_seconds or 0)
+        except Exception:
+            ttl = 0
+        if ttl > 0 and sent is not None:
+            import asyncio as _asyncio
+            async def _auto_del(_client, _cid, _mid, _delay):
+                try:
+                    await _asyncio.sleep(_delay)
+                    await _client.delete_messages(_cid, _mid)
+                except Exception:
+                    pass
+            _asyncio.create_task(_auto_del(client, chat_id, sent.id, ttl))
         return
 
     # ── Forward / Copy channel post ──
