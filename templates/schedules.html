@@ -626,7 +626,10 @@ document.getElementById('sched-form').addEventListener('submit', async function 
     if (maxd) body.max_per_day = parseInt(maxd);
 
     try {
-        var res = await fetch('/api/schedules/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var editId = document.getElementById('s-id').value;
+        var url = editId ? ('/api/schedules/' + editId) : '/api/schedules/';
+        var method = editId ? 'PUT' : 'POST';
+        var res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         var data = await res.json();
         if (res.ok) { closeModal(); loadAll(); }
         else { fail(data.detail || 'Gagal menyimpan'); }
