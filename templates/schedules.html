@@ -20,10 +20,11 @@
 .as-btn-ghost{background:#fff;color:#1b1b1b;}
 .as-btn-ghost:hover{background:#e2e2e2;}
 .as-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px;}
-.as-tabs{display:flex;gap:8px;border-bottom:3px solid #000;margin-bottom:24px;overflow-x:auto;}
-.as-tab{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;color:#434655;border:3px solid transparent;border-bottom:none;background:transparent;cursor:pointer;white-space:nowrap;margin-bottom:-3px;}
-.as-tab:hover{color:#1b1b1b;background:#e2e2e2;}
-.as-tab.active{background:#2563eb;color:#fff;border-color:#000;border-bottom:none;}
+.as-tabs{display:flex;gap:10px;margin-bottom:24px;overflow-x:auto;padding:2px 4px 6px 2px;}
+.as-tab{padding:10px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#1b1b1b;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);cursor:pointer;white-space:nowrap;transition:all .1s;}
+.as-tab:hover{background:#e2e2e2;}
+.as-tab:active{transform:translate(4px,4px);box-shadow:none;}
+.as-tab.active{background:#2563eb;color:#fff;}
 .as-list{display:flex;flex-direction:column;gap:16px;}
 .as-card{background:#fff;border:3px solid #000;box-shadow:4px 4px 0 0 rgba(0,0,0,1);padding:20px;display:flex;flex-direction:column;}
 .as-card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
@@ -120,9 +121,9 @@
 .dark .as-btn{box-shadow:4px 4px 0 0 #33406B;}
 .dark .as-btn-ghost{background:#13192A;color:#E6E9F2;}
 .dark .as-btn-ghost:hover{background:#1B2340;}
-.dark .as-tabs{border-color:#33406B;}
-.dark .as-tab{color:#9AA3B8;}
-.dark .as-tab:hover{background:#1B2340;color:#E6E9F2;}
+.dark .as-tab{background:#13192A;color:#E6E9F2;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
+.dark .as-tab:hover{background:#1B2340;}
+.dark .as-tab.active{background:#2563eb;color:#fff;}
 .dark .as-card{background:#13192A;border-color:#33406B;box-shadow:4px 4px 0 0 #33406B;}
 .dark .as-card-count{color:#B4C5FF;}
 .dark .as-pill{background:#13192A;color:#E6E9F2;border-color:#33406B;}
@@ -198,12 +199,13 @@
   <div class="as-modal-box cc-box">
     <div class="cc-head">
       <div>
-        <h3>Create Auto Share Campaign</h3>
-        <p>Atur protokol cross-posting otomatis.</p>
+        <h3 id="cc-title">Create Auto Share Campaign</h3>
+        <p id="cc-subtitle">Atur protokol cross-posting otomatis.</p>
       </div>
       <button type="button" onclick="closeModal()" class="cc-x"><span class="cc-ms">close</span></button>
     </div>
     <form id="sched-form" class="cc-form">
+      <input type="hidden" id="s-id">
       <div class="cc-body">
         <div id="form-result" class="hidden as-msg"></div>
 
@@ -271,7 +273,7 @@
 
       <div class="cc-foot">
         <button type="button" onclick="closeModal()" class="as-btn as-btn-ghost">Cancel</button>
-        <button type="submit" class="as-btn"><span class="cc-ms">rocket_launch</span> Initialize Campaign</button>
+        <button type="submit" class="as-btn"><span class="cc-ms" id="cc-submit-icon">rocket_launch</span> <span id="cc-submit-txt">Initialize Campaign</span></button>
       </div>
     </form>
   </div>
@@ -383,6 +385,7 @@ function renderSchedules() {
         var toggle = s.is_active
             ? '<button title="Pause" onclick="toggleSched(' + s.id + ',false)" class="as-iconbtn"><span class="cc-ms">pause</span></button>'
             : '<button title="Resume" onclick="toggleSched(' + s.id + ',true)" class="as-iconbtn"><span class="cc-ms">play_arrow</span></button>';
+        var edit = '<button title="Edit" onclick="openEdit(' + s.id + ')" class="as-iconbtn"><span class="cc-ms">edit</span></button>';
         var del = '<button title="Hapus" onclick="deleteSched(' + s.id + ')" class="as-iconbtn" style="color:#ba1a1a"><span class="cc-ms">delete</span></button>';
         html += '<div class="as-card">'
             + '<div class="as-cardhead"><h3 class="as-card-title">' + esc(s.name) + '</h3>' + badge + '</div>'
@@ -392,7 +395,7 @@ function renderSchedules() {
             + '<div><p class="as-statk">Jadwal</p><p class="as-statv">' + schedInfo(s) + '</p></div>'
             + '</div>'
             + '<div class="as-cardfoot"><span class="as-lastrun">' + last + ' \u00b7 Akun: ' + esc(accm) + rmsg + '</span>'
-            + '<div class="as-card-actions">' + toggle + del + '</div></div>'
+            + '<div class="as-card-actions">' + toggle + edit + del + '</div></div>'
             + '</div>';
     }
     box.innerHTML = html;
@@ -478,9 +481,18 @@ function toggleAdv() {
     if (t) t.textContent = hidden ? 'Show Advanced Config' : 'Hide Advanced Config';
 }
 
-function openAdd() {
+function resetForm() {
     document.getElementById('sched-form').reset();
+    document.getElementById('s-id').value = '';
     document.getElementById('form-result').classList.add('hidden');
+}
+
+function openAdd() {
+    resetForm();
+    document.getElementById('cc-title').textContent = 'Create Auto Share Campaign';
+    document.getElementById('cc-subtitle').textContent = 'Atur protokol cross-posting otomatis.';
+    document.getElementById('cc-submit-icon').textContent = 'rocket_launch';
+    document.getElementById('cc-submit-txt').textContent = 'Initialize Campaign';
     fillSelects();
     onSource();
     onAccMode();
@@ -489,6 +501,63 @@ function openAdd() {
     if (adv) adv.classList.add('hidden');
     var advt = document.getElementById('adv-txt');
     if (advt) advt.textContent = 'Show Advanced Config';
+    var body = document.querySelector('#modal .cc-body');
+    if (body) body.scrollTop = 0;
+    document.getElementById('modal').classList.remove('hidden');
+}
+
+function openEdit(id) {
+    var s = null;
+    for (var i = 0; i < SCHEDULES.length; i++) { if (SCHEDULES[i].id === id) { s = SCHEDULES[i]; break; } }
+    if (!s) return;
+    resetForm();
+    document.getElementById('cc-title').textContent = 'Edit Campaign';
+    document.getElementById('cc-subtitle').textContent = 'Perbarui konfigurasi campaign.';
+    document.getElementById('cc-submit-icon').textContent = 'save';
+    document.getElementById('cc-submit-txt').textContent = 'Save Changes';
+    fillSelects();
+
+    document.getElementById('s-id').value = s.id;
+    document.getElementById('s-name').value = s.name || '';
+    document.getElementById('s-msg').value = s.message_id || '';
+    document.getElementById('s-randmsg').checked = !!s.random_message;
+    document.getElementById('s-accmode').value = s.account_mode || 'fixed';
+    document.getElementById('s-account').value = s.account_id || '';
+
+    var src = s.target_source || 'manual_targets';
+    if (src === 'label') src = 'manual_targets';
+    var srcRadio = document.querySelector('input[name="tsource"][value="' + src + '"]');
+    if (srcRadio) srcRadio.checked = true;
+    onSource();
+    if (src === 'telegram_folder') document.getElementById('s-folder').value = s.folder_id || '';
+    else if (src === 'manual_collection') document.getElementById('s-collection').value = s.collection_id || '';
+    else {
+        var ids = String(s.target_group_ids || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+        var cbs = document.querySelectorAll('.s-cb');
+        for (var c = 0; c < cbs.length; c++) { cbs[c].checked = ids.indexOf(cbs[c].value) >= 0; }
+    }
+
+    var st = s.schedule_type || 'cron';
+    var stRadio = document.querySelector('input[name="stype"][value="' + st + '"]');
+    if (stRadio) stRadio.checked = true;
+    onSchedType();
+    if (st === 'fixed_times') document.getElementById('s-fixed-custom').value = s.fixed_times || '';
+    else if (st === 'interval') document.getElementById('s-interval').value = s.interval_minutes || '';
+    else document.getElementById('s-cron').value = s.cron_expression || '';
+
+    document.getElementById('s-delay').value = s.delay_seconds || 0;
+    document.getElementById('s-rmin').value = s.random_delay_min || 0;
+    document.getElementById('s-rmax').value = s.random_delay_max || 0;
+    document.getElementById('s-random').checked = !!s.random_order;
+    if (s.max_per_day) document.getElementById('s-maxday').value = s.max_per_day;
+    if (s.start_time) document.getElementById('s-start').value = s.start_time;
+    if (s.end_time) document.getElementById('s-end').value = s.end_time;
+
+    var days = String(s.days_active || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var dcs = document.querySelectorAll('.day-cb');
+    for (var d = 0; d < dcs.length; d++) { dcs[d].checked = days.length ? days.indexOf(dcs[d].value) >= 0 : true; }
+
+    onAccMode();
     var body = document.querySelector('#modal .cc-body');
     if (body) body.scrollTop = 0;
     document.getElementById('modal').classList.remove('hidden');
@@ -557,7 +626,10 @@ document.getElementById('sched-form').addEventListener('submit', async function 
     if (maxd) body.max_per_day = parseInt(maxd);
 
     try {
-        var res = await fetch('/api/schedules/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var editId = document.getElementById('s-id').value;
+        var url = editId ? ('/api/schedules/' + editId) : '/api/schedules/';
+        var method = editId ? 'PUT' : 'POST';
+        var res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         var data = await res.json();
         if (res.ok) { closeModal(); loadAll(); }
         else { fail(data.detail || 'Gagal menyimpan'); }
