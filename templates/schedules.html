@@ -643,9 +643,16 @@ document.getElementById('sched-form').addEventListener('submit', async function 
         var method = editId ? 'PUT' : 'POST';
         var res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         var data = await res.json();
-        if (res.ok) { closeModal(); loadAll(); }
-        else { fail(data.detail || 'Gagal menyimpan'); }
-    } catch (err) { fail('Koneksi error'); }
+        if (res.ok) {
+            closeModal();
+            notify(editId ? 'Campaign berhasil diperbarui' : 'Campaign berhasil dibuat', 'success');
+            loadAll();
+        } else {
+            var errMsg = data.detail || ('Gagal menyimpan (HTTP ' + res.status + ')');
+            fail(errMsg);
+            notify(errMsg, 'error');
+        }
+    } catch (err) { fail('Koneksi error'); notify('Koneksi error saat menyimpan', 'error'); }
 });
 
 async function toggleSched(id, active) {
