@@ -169,6 +169,8 @@
     <p class="as-sub">Kelola &amp; pantau sekuens auto-share otomatis multi-akun.</p>
   </header>
 
+  <div id="sched-summary" class="as-summary"></div>
+
   <div class="as-tabs">
     <button id="tabbtn-campaigns" onclick="switchTab('campaigns')" class="as-tab active">Campaigns</button>
     <button id="tabbtn-labels" onclick="switchTab('labels')" class="as-tab">Labels</button>
@@ -180,7 +182,6 @@
       <button onclick="loadAll()" class="as-btn as-btn-ghost"><span class="cc-ms">sync</span> Refresh</button>
       <button onclick="openAdd()" class="as-btn"><span class="cc-ms">add_circle</span> New Campaign</button>
     </div>
-    <div id="sched-summary" class="as-summary"></div>
     <div id="sched-list" class="as-cardgrid"><div class="as-empty">Memuat...</div></div>
   </div>
 
@@ -334,8 +335,19 @@ function switchTab(name) {
         var b = document.getElementById('tabbtn-' + t);
         if (b) b.className = 'as-tab' + (t === name ? ' active' : '');
     }
+    var sum = document.getElementById('sched-summary');
+    if (sum) sum.classList.toggle('hidden', name !== 'campaigns');
     if (location.hash !== '#' + name) { history.replaceState(null, '', '#' + name); }
     if (name === 'history') loadHistory();
+}
+
+function notify(msg, type) {
+    if (typeof window.showToast === 'function') { window.showToast(msg, type || 'success'); return; }
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:12px 18px;border:3px solid #000;box-shadow:4px 4px 0 rgba(0,0,0,1);font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;background:' + (type === 'error' ? '#ffdad6' : '#c9f5d8') + ';color:' + (type === 'error' ? '#93000a' : '#0b5f2a') + ';';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function () { t.remove(); }, 300); }, 3000);
 }
 
 function schedInfo(s) {
@@ -631,9 +643,16 @@ document.getElementById('sched-form').addEventListener('submit', async function 
         var method = editId ? 'PUT' : 'POST';
         var res = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         var data = await res.json();
-        if (res.ok) { closeModal(); loadAll(); }
-        else { fail(data.detail || 'Gagal menyimpan'); }
-    } catch (err) { fail('Koneksi error'); }
+        if (res.ok) {
+            closeModal();
+            notify(editId ? 'Campaign berhasil diperbarui' : 'Campaign berhasil dibuat', 'success');
+            loadAll();
+        } else {
+            var errMsg = data.detail || ('Gagal menyimpan (HTTP ' + res.status + ')');
+            fail(errMsg);
+            notify(errMsg, 'error');
+        }
+    } catch (err) { fail('Koneksi error'); notify('Koneksi error saat menyimpan', 'error'); }
 });
 
 async function toggleSched(id, active) {
