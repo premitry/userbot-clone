@@ -85,12 +85,12 @@ def add_schedule_job(schedule: Schedule):
 
     if st == "interval":
         mins = schedule.interval_minutes or 60
-    job = scheduler.add_job(
+        job = scheduler.add_job(
             _run_scheduled, trigger=IntervalTrigger(minutes=mins),
             id=f"schedule_{schedule.id}",
             args=[schedule.id], replace_existing=True,
         )
-    logger.info("📅 Interval job: schedule_%s (tiap %sm) next=%s tz=%s", schedule.id, mins, _next_run(job), settings.APP_TIMEZONE)
+        logger.info("📅 Interval job: schedule_%s (tiap %sm) next=%s tz=%s", schedule.id, mins, _next_run(job), settings.APP_TIMEZONE)
         return
 
     # default: cron
