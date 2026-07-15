@@ -79,6 +79,7 @@ class Settings:
     APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
     APP_PORT: int = int(os.getenv("APP_PORT", "8000"))
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+    APP_TIMEZONE: str = os.getenv("APP_TIMEZONE", "Asia/Jakarta")
 
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./userbot.db")

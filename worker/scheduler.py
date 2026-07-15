@@ -12,11 +12,13 @@ can_send=false dilewati.
 import logging
 import random
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from config import settings
 from database import SessionLocal
 from models import (
     AccountTarget, Group, ManualCollectionMember, Message, Schedule,
@@ -25,7 +27,8 @@ from models import (
 
 logger = logging.getLogger(__name__)
 
-scheduler = AsyncIOScheduler()
+APP_TZ = ZoneInfo(settings.APP_TIMEZONE)
+scheduler = AsyncIOScheduler(timezone=APP_TZ)
 
 
 def init_scheduler():
@@ -34,7 +37,7 @@ def init_scheduler():
         active = db.query(Schedule).filter(Schedule.is_active == True).all()
         for s in active:
             add_schedule_job(s)
-        logger.info("📅 Scheduler loaded: %d active campaigns", len(active))
+        logger.info("📅 Scheduler loaded: %d active campaigns (timezone=%s)", len(active), settings.APP_TIMEZONE)
     finally:
         db.close()
 
@@ -63,26 +66,27 @@ def add_schedule_job(schedule: Schedule):
         for idx, t in enumerate(times):
             try:
                 hh, mm = t.split(":")
-                trigger = CronTrigger(hour=int(hh), minute=int(mm), day_of_week=dow)
+                trigger = CronTrigger(hour=int(hh), minute=int(mm), day_of_week=dow, timezone=APP_TZ)
             except Exception:
                 logger.warning("Fixed-time tidak valid pada schedule %s: %r", schedule.id, t)
                 continue
-            scheduler.add_job(
+            job = scheduler.add_job(
                 _run_scheduled, trigger=trigger,
                 id=f"schedule_{schedule.id}_t{idx}",
                 args=[schedule.id], replace_existing=True,
             )
-        logger.info("📅 Fixed-times job: schedule_%s (%s)", schedule.id, schedule.fixed_times)
+            logger.info("📅 Fixed-times job: %s jam=%s next=%s tz=%s", job.id, t, job.next_run_time, settings.APP_TIMEZONE)
+        logger.info("📅 Fixed-times loaded: schedule_%s (%s)", schedule.id, schedule.fixed_times)
         return
 
     if st == "interval":
         mins = schedule.interval_minutes or 60
-        scheduler.add_job(
+    job = scheduler.add_job(
             _run_scheduled, trigger=IntervalTrigger(minutes=mins),
             id=f"schedule_{schedule.id}",
             args=[schedule.id], replace_existing=True,
         )
-        logger.info("📅 Interval job: schedule_%s (tiap %sm)", schedule.id, mins)
+    logger.info("📅 Interval job: schedule_%s (tiap %sm) next=%s tz=%s", schedule.id, mins, job.next_run_time, settings.APP_TIMEZONE)
         return
 
     # default: cron
@@ -92,14 +96,14 @@ def add_schedule_job(schedule: Schedule):
         return
     trigger = CronTrigger(
         minute=parts[0], hour=parts[1], day=parts[2],
-        month=parts[3], day_of_week=parts[4],
+        month=parts[3], day_of_week=parts[4], timezone=APP_TZ,
     )
-    scheduler.add_job(
+    job = scheduler.add_job(
         _run_scheduled, trigger=trigger,
         id=f"schedule_{schedule.id}",
         args=[schedule.id], replace_existing=True,
     )
-    logger.info("📅 Cron job: schedule_%s (%s)", schedule.id, schedule.cron_expression)
+    logger.info("📅 Cron job: schedule_%s (%s) next=%s tz=%s", schedule.id, schedule.cron_expression, job.next_run_time, settings.APP_TIMEZONE)
 
 
 def _resolve_targets(db, schedule):
@@ -171,7 +175,7 @@ async def _run_scheduled(schedule_id: int):
         if not s or not s.is_active:
             return
 
-        now = datetime.now()
+        now = datetime.now(APP_TZ)
 
         if s.days_active:
             allowed = [int(x) for x in s.days_active.split(",") if x.strip().isdigit()]
