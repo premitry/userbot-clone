@@ -31,6 +31,10 @@ APP_TZ = ZoneInfo(settings.APP_TIMEZONE)
 scheduler = AsyncIOScheduler(timezone=APP_TZ)
 
 
+def _next_run(job):
+    return getattr(job, "next_run_time", None)
+
+
 def init_scheduler():
     db = SessionLocal()
     try:
@@ -75,7 +79,7 @@ def add_schedule_job(schedule: Schedule):
                 id=f"schedule_{schedule.id}_t{idx}",
                 args=[schedule.id], replace_existing=True,
             )
-            logger.info("📅 Fixed-times job: %s jam=%s next=%s tz=%s", job.id, t, job.next_run_time, settings.APP_TIMEZONE)
+            logger.info("📅 Fixed-times job: %s jam=%s next=%s tz=%s", job.id, t, _next_run(job), settings.APP_TIMEZONE)
         logger.info("📅 Fixed-times loaded: schedule_%s (%s)", schedule.id, schedule.fixed_times)
         return
 
@@ -86,7 +90,7 @@ def add_schedule_job(schedule: Schedule):
             id=f"schedule_{schedule.id}",
             args=[schedule.id], replace_existing=True,
         )
-    logger.info("📅 Interval job: schedule_%s (tiap %sm) next=%s tz=%s", schedule.id, mins, job.next_run_time, settings.APP_TIMEZONE)
+    logger.info("📅 Interval job: schedule_%s (tiap %sm) next=%s tz=%s", schedule.id, mins, _next_run(job), settings.APP_TIMEZONE)
         return
 
     # default: cron
@@ -103,7 +107,7 @@ def add_schedule_job(schedule: Schedule):
         id=f"schedule_{schedule.id}",
         args=[schedule.id], replace_existing=True,
     )
-    logger.info("📅 Cron job: schedule_%s (%s) next=%s tz=%s", schedule.id, schedule.cron_expression, job.next_run_time, settings.APP_TIMEZONE)
+    logger.info("📅 Cron job: schedule_%s (%s) next=%s tz=%s", schedule.id, schedule.cron_expression, _next_run(job), settings.APP_TIMEZONE)
 
 
 def _resolve_targets(db, schedule):
