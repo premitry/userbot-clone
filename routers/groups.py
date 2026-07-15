@@ -190,6 +190,7 @@ async def sync_groups(db: Session = Depends(get_db), user: User = Depends(get_cu
                     db.flush()
                     new_targets += 1
 
+                db.flush()
                 rel = db.query(AccountTarget).filter(
                     AccountTarget.account_id == acc_id,
                     AccountTarget.target_id == g.id,
@@ -200,14 +201,28 @@ async def sync_groups(db: Session = Depends(get_db), user: User = Depends(get_cu
                     rel.is_joined = True
                     rel.last_synced_at = datetime.utcnow()
                 else:
-                    db.add(AccountTarget(
-                        account_id=acc_id,
-                        target_id=g.id,
-                        can_send=can_send,
-                        role=role,
-                        is_joined=True,
-                    ))
-                    new_links += 1
+                    try:
+                        with db.begin_nested():
+                            db.add(AccountTarget(
+                                account_id=acc_id,
+                                target_id=g.id,
+                                can_send=can_send,
+                                role=role,
+                                is_joined=True,
+                                last_synced_at=datetime.utcnow(),
+                            ))
+                        new_links += 1
+                    except Exception:
+                        # Race / duplicate: fallback ke update baris yang sudah ada.
+                        rel = db.query(AccountTarget).filter(
+                            AccountTarget.account_id == acc_id,
+                            AccountTarget.target_id == g.id,
+                        ).first()
+                        if rel:
+                            rel.can_send = can_send
+                            rel.role = role
+                            rel.is_joined = True
+                            rel.last_synced_at = datetime.utcnow()
             db.commit()
 
         return {
