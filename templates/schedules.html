@@ -164,9 +164,15 @@
 </style>
 
 <div class="as-wrap">
-  <header class="as-head">
-    <h1 class="as-title">Campaign</h1>
-    <p class="as-sub">Kelola &amp; pantau sekuens auto-share otomatis multi-akun.</p>
+  <header class="as-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <h1 class="as-title">Campaign</h1>
+      <p class="as-sub">Kelola &amp; pantau sekuens auto-share otomatis multi-akun.</p>
+    </div>
+    <div id="camp-topbar" class="as-toolbar" style="margin:0;">
+      <button onclick="loadAll()" class="as-btn as-btn-ghost"><span class="cc-ms">sync</span> Refresh</button>
+      <button onclick="openAdd()" class="as-btn"><span class="cc-ms">add_circle</span> New Campaign</button>
+    </div>
   </header>
 
   <div id="sched-summary" class="as-summary"></div>
@@ -178,10 +184,6 @@
   </div>
 
   <div id="tab-campaigns">
-    <div class="as-toolbar">
-      <button onclick="loadAll()" class="as-btn as-btn-ghost"><span class="cc-ms">sync</span> Refresh</button>
-      <button onclick="openAdd()" class="as-btn"><span class="cc-ms">add_circle</span> New Campaign</button>
-    </div>
     <div id="sched-list" class="as-cardgrid"><div class="as-empty">Memuat...</div></div>
   </div>
 
