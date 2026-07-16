@@ -11,6 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+from zoneinfo import ZoneInfo
+from config import settings
 
 from active_account import get_active_account_id
 from auth import get_current_user
@@ -37,7 +39,7 @@ async def execute_command(
         target_group=cmd.target_group_id,
         message=cmd.message,
         status="pending",
-        executed_at=datetime.utcnow(),
+        executed_at=datetime.now(ZoneInfo(settings.APP_TIMEZONE)).replace(tzinfo=None),
     )
     db.add(log)
     db.commit()
