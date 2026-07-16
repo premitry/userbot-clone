@@ -77,7 +77,7 @@ def add_schedule_job(schedule: Schedule):
             job = scheduler.add_job(
                 _run_scheduled, trigger=trigger,
                 id=f"schedule_{schedule.id}_t{idx}",
-                args=[schedule.id], replace_existing=True,
+                args=[schedule.id], replace_existing=True, misfire_grace_time=3600, coalesce=True,
             )
             logger.info("📅 Fixed-times job: %s jam=%s next=%s tz=%s", job.id, t, _next_run(job), settings.APP_TIMEZONE)
         logger.info("📅 Fixed-times loaded: schedule_%s (%s)", schedule.id, schedule.fixed_times)
@@ -88,7 +88,7 @@ def add_schedule_job(schedule: Schedule):
         job = scheduler.add_job(
             _run_scheduled, trigger=IntervalTrigger(minutes=mins),
             id=f"schedule_{schedule.id}",
-            args=[schedule.id], replace_existing=True,
+            args=[schedule.id], replace_existing=True, misfire_grace_time=3600, coalesce=True,
         )
         logger.info("📅 Interval job: schedule_%s (tiap %sm) next=%s tz=%s", schedule.id, mins, _next_run(job), settings.APP_TIMEZONE)
         return
@@ -105,7 +105,7 @@ def add_schedule_job(schedule: Schedule):
     job = scheduler.add_job(
         _run_scheduled, trigger=trigger,
         id=f"schedule_{schedule.id}",
-        args=[schedule.id], replace_existing=True,
+        args=[schedule.id], replace_existing=True, misfire_grace_time=3600, coalesce=True,
     )
     logger.info("📅 Cron job: schedule_%s (%s) next=%s tz=%s", schedule.id, schedule.cron_expression, _next_run(job), settings.APP_TIMEZONE)
 
@@ -240,7 +240,7 @@ async def _run_scheduled(schedule_id: int):
             targets.append((int(g.telegram_id), g.title, acc))
 
         s.rr_index = rr
-        s.last_run = datetime.utcnow()
+        s.last_run = datetime.now(APP_TZ).replace(tzinfo=None)
         s.sent_today = (s.sent_today or 0) + 1
         db.commit()
 

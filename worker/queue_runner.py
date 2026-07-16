@@ -10,6 +10,12 @@ from datetime import datetime
 
 from database import SessionLocal
 from models import CommandLog, Message, QueueJob
+from zoneinfo import ZoneInfo
+from config import settings
+
+
+def _now_local():
+    return datetime.now(ZoneInfo(settings.APP_TIMEZONE)).replace(tzinfo=None)
 
 
 def _classify_error(e: Exception) -> str:
@@ -120,7 +126,7 @@ async def _run(job_id, targets, message_id, fallback_text, cmd_name,
                 source=source,
                 status="pending",
                 message=(msg.name if msg else fallback_text),
-                executed_at=datetime.utcnow(),
+                executed_at=_now_local(),
             )
             db.add(log)
             db.commit()
@@ -140,6 +146,7 @@ async def _run(job_id, targets, message_id, fallback_text, cmd_name,
                 log.status = _classify_error(e)
                 log.error = str(e)
                 job.failed_count = (job.failed_count or 0) + 1
+                job.error = f"{log.status}: {e}"  # surface alasan gagal ke QueueJob
 
             job.completed = i + 1
             db.commit()
@@ -148,7 +155,7 @@ async def _run(job_id, targets, message_id, fallback_text, cmd_name,
         if job.status != "canceled":
             job.status = "done"
         job.current_target = None
-        job.finished_at = datetime.utcnow()
+        job.finished_at = _now_local()
         db.commit()
 
     except Exception as e:
@@ -157,7 +164,7 @@ async def _run(job_id, targets, message_id, fallback_text, cmd_name,
             if job:
                 job.status = "error"
                 job.error = str(e)
-                job.finished_at = datetime.utcnow()
+                job.finished_at = _now_local()
                 db.commit()
         except Exception:
             pass

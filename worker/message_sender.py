@@ -13,7 +13,7 @@ di-skip dengan error jelas.
 import asyncio
 import os
 
-from worker.flood_handler import safe_send, safe_send_photo
+from worker.flood_handler import safe_send, safe_send_photo, safe_forward
 
 
 def _resolve_media(m):
@@ -94,7 +94,7 @@ async def run_steps(client, chat_id, steps, db, msg=None, arg=""):
         elif t == "forward_channel":
             fc, mid = _parse_post_url(st.channel_post_url)
             if fc and mid:
-                await client.forward_messages(chat_id, fc, mid)
+                await safe_forward(client, chat_id, fc, mid)
         elif t == "dynamic_qris":
             default_amt = _default_amount(msg)
             amount_text = st.content or (str(default_amt) if default_amt else arg)
@@ -138,10 +138,7 @@ async def send_message_to_chat(client, chat_id, msg, db, arg=""):
         from_chat, mid = _resolve_channel(db, msg)
         if not from_chat or not mid:
             raise ValueError("Channel post tidak ditemukan (cek mode / link / sync)")
-        if t == "copy_channel":
-            await client.copy_message(chat_id, from_chat, mid)
-        else:
-            await client.forward_messages(chat_id, from_chat, mid)
+        await safe_forward(client, chat_id, from_chat, mid, copy=(t == "copy_channel"))
         return
 
     if t == "album":
