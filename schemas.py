@@ -326,6 +326,7 @@ class MessageCreate(BaseModel):
     qris_footer_text: Optional[str] = None
     qris_frame: Optional[str] = "none"
     qris_size: Optional[str] = "small"
+    qris_provider: Optional[str] = "local"  # local | gatepay
     is_active: Optional[bool] = True
     steps: Optional[list[WorkflowStepIn]] = None
 
@@ -347,6 +348,7 @@ class MessageUpdate(BaseModel):
     qris_footer_text: Optional[str] = None
     qris_frame: Optional[str] = None
     qris_size: Optional[str] = None
+    qris_provider: Optional[str] = None
     is_active: Optional[bool] = None
     steps: Optional[list[WorkflowStepIn]] = None
 
@@ -370,6 +372,7 @@ class MessageResponse(BaseModel):
     qris_footer_text: Optional[str] = None
     qris_frame: Optional[str] = "none"
     qris_size: Optional[str] = "small"
+    qris_provider: Optional[str] = "local"
     is_active: bool
     created_at: datetime
     steps: list[WorkflowStepResponse] = []
