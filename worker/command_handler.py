@@ -167,6 +167,11 @@ async def _execute(client, message, msg, arg, db):
 
     # ── Dynamic QRIS ──
     if msg.type == "dynamic_qris":
+        provider = (getattr(msg, "qris_provider", None) or "local").lower()
+        if provider == "gatepay":
+            await _execute_gatepay_qris(client, message, msg, arg, db)
+            return
+
         from worker.qris_gen import build_dynamic_qris, generate_qris_image, parse_amount
         base = msg.qris_payload if msg.qris_payload else _get_setting(db, "qris_base_payload", "")
         dynamic_on = _get_setting(db, "qris_dynamic_amount", "1") != "0"
