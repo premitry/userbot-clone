@@ -359,7 +359,7 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
         "{checkout_url}": checkout_url,
         "{ref}": reference,
     }
-    caption = content or f"💳 Bayar tepat *Rp{pretty_uniq}* (nominal unik).\nHarga: Rp{pretty_base}"
+    caption = content or f"💳 Total: *Rp{pretty_uniq}*"
     footer = (msg.qris_footer_text or "").strip()
     if footer:
         caption = caption + "\n\n" + footer
