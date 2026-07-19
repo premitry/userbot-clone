@@ -457,6 +457,7 @@ class GatePaySettings(BaseModel):
     api_key_masked: str = ""
     gatepay_notify_on_paid: bool = True
     gatepay_thanks_text: str = ""
+    gatepay_expires_in: int = 900
 
 
 class GatePaySettingsUpdate(BaseModel):
@@ -464,6 +465,7 @@ class GatePaySettingsUpdate(BaseModel):
     gatepay_callback_secret: Optional[str] = None
     gatepay_notify_on_paid: Optional[bool] = None
     gatepay_thanks_text: Optional[str] = None
+    gatepay_expires_in: Optional[int] = None
 
 
 class GatePayOrderResponse(BaseModel):

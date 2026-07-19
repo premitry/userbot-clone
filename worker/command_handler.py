@@ -318,8 +318,9 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
         raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
 
     reference = f"tg_{chat_id}_{message.id}"
+    expires_in = int(getattr(acc, "gatepay_expires_in", 0) or 0) or None
     try:
-        order = await create_order(api_key, amount, reference=reference)
+        order = await create_order(api_key, amount, reference=reference, expires_in=expires_in)
     except GatePayError as e:
         try:
             await message.edit_text(f"\u26a0\ufe0f {e}")

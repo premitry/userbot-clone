@@ -42,6 +42,20 @@
         <textarea id="gp-thanks" rows="3" class="uc-input w-full" placeholder="✅ Pembayaran diterima, terima kasih! 🙏"></textarea>
         <p class="text-xs text-gray-500 mt-1">Variabel: <code>{amount_rp}</code> <code>{unique_rp}</code> <code>{ref}</code> · <button type="button" onclick="gpResetThanks()" class="underline">pakai default</button></p>
       </div>
+      <div>
+        <label class="text-xs uppercase tracking-wide text-gray-400">Masa Aktif QRIS (menit)</label>
+        <div class="flex items-center gap-2">
+          <input id="gp-expires-min" type="number" min="1" max="1440" step="1" class="uc-input mono w-32" placeholder="15">
+          <span class="text-xs text-gray-500">= <span id="gp-expires-sec" class="mono">900</span> detik · setelah lewat waktu ini QRIS otomatis expired di GatePay</span>
+        </div>
+        <div class="flex gap-1 mt-1 text-xs">
+          <button type="button" onclick="setExp(5)" class="uc-sbtn">5m</button>
+          <button type="button" onclick="setExp(15)" class="uc-sbtn">15m</button>
+          <button type="button" onclick="setExp(30)" class="uc-sbtn">30m</button>
+          <button type="button" onclick="setExp(60)" class="uc-sbtn">1j</button>
+          <button type="button" onclick="setExp(180)" class="uc-sbtn">3j</button>
+        </div>
+      </div>
       <div class="flex items-center gap-2">
         <input id="gp-test-chat" type="text" class="uc-input mono text-xs flex-1 max-w-xs" placeholder="chat_id / @username">
         <button type="button" onclick="gpTestThanks()" class="uc-sbtn text-xs">📨 Test</button>
@@ -101,7 +115,19 @@ async function loadSettings(){
   document.getElementById('gp-notify').checked = !!d.gatepay_notify_on_paid;
   // Kalau user belum pernah set, isi otomatis dengan default (bisa diubah/simpan).
   document.getElementById('gp-thanks').value = (d.gatepay_thanks_text && d.gatepay_thanks_text.trim()) ? d.gatepay_thanks_text : GP_DEFAULT_THANKS;
+  const secs = Number(d.gatepay_expires_in || 900);
+  document.getElementById('gp-expires-min').value = Math.max(1, Math.round(secs/60));
+  document.getElementById('gp-expires-sec').textContent = secs;
   document.getElementById('gp-notify-url').value = location.origin + '/api/public/webhooks/gatepay';
+}
+
+document.getElementById('gp-expires-min').addEventListener('input', (e) => {
+  const m = Math.max(1, Number(e.target.value||0));
+  document.getElementById('gp-expires-sec').textContent = m*60;
+});
+function setExp(m){
+  document.getElementById('gp-expires-min').value = m;
+  document.getElementById('gp-expires-sec').textContent = m*60;
 }
 
 function gpResetThanks(){
@@ -133,6 +159,7 @@ document.getElementById('gp-form').addEventListener('submit', async (e) => {
   const body = {
     gatepay_notify_on_paid: document.getElementById('gp-notify').checked,
     gatepay_thanks_text: document.getElementById('gp-thanks').value,
+    gatepay_expires_in: Math.max(1, Number(document.getElementById('gp-expires-min').value||15)) * 60,
   };
   const k = document.getElementById('gp-apikey').value.trim();
   const s = document.getElementById('gp-secret').value.trim();

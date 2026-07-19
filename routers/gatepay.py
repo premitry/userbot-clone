@@ -43,6 +43,7 @@ def get_settings(db: Session = Depends(get_db), user: User = Depends(get_current
         api_key_masked=_mask(acc.gatepay_api_key),
         gatepay_notify_on_paid=bool(acc.gatepay_notify_on_paid),
         gatepay_thanks_text=acc.gatepay_thanks_text or "",
+        gatepay_expires_in=int(acc.gatepay_expires_in or 0) or 900,
     )
 
 
@@ -61,6 +62,11 @@ def update_settings(
         acc.gatepay_notify_on_paid = body.gatepay_notify_on_paid
     if body.gatepay_thanks_text is not None:
         acc.gatepay_thanks_text = body.gatepay_thanks_text
+    if body.gatepay_expires_in is not None:
+        v = int(body.gatepay_expires_in)
+        if v < 60 or v > 86400:
+            raise HTTPException(400, "expires_in harus antara 60 dan 86400 detik")
+        acc.gatepay_expires_in = v
     db.commit()
     db.refresh(acc)
     return get_settings(db, user)
