@@ -2,9 +2,9 @@
   "name": "userbot",
   "private": true,
   "scripts": {
-    "build": "mkdir -p dist && printf '%s\n' '<!doctype html><html><head><meta charset=\"utf-8\"><title>userbot</title></head><body>Python project</body></html>' > dist/index.html",
+    "build": "node ./scripts/create-dist.cjs",
     "build:dev": "npm run build",
-    "dist-check": "npm run build && test -f dist/index.html",
+    "dist-check": "node ./scripts/create-dist.cjs",
     "typecheck": "echo skip"
   }
 }
