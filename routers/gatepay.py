@@ -74,6 +74,33 @@ async def test(db: Session = Depends(get_db), user: User = Depends(get_current_u
         raise HTTPException(400, str(e))
 
 
+
+@router.delete("/settings/{field}")
+def clear_setting(
+    field: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Hapus satu field setting GatePay. field: api_key | callback_secret | thanks_text | all"""
+    acc = _require_active(db)
+    if field == "api_key":
+        acc.gatepay_api_key = None
+    elif field == "callback_secret":
+        acc.gatepay_callback_secret = None
+    elif field == "thanks_text":
+        acc.gatepay_thanks_text = None
+    elif field == "all":
+        acc.gatepay_api_key = None
+        acc.gatepay_callback_secret = None
+        acc.gatepay_thanks_text = None
+        acc.gatepay_notify_on_paid = False
+    else:
+        raise HTTPException(400, "field tidak dikenal (api_key|callback_secret|thanks_text|all)")
+    db.commit()
+    return {"message": f"Setting '{field}' dihapus", "field": field}
+
+
+
 @router.get("/orders", response_model=list[GatePayOrderResponse])
 def list_orders(
     limit: int = 100,

@@ -14,13 +14,20 @@
     <div id="gp-loading" class="text-sm text-gray-400">Memuat…</div>
     <form id="gp-form" class="hidden space-y-3">
       <div>
-        <label class="text-xs uppercase tracking-wide text-gray-400">GatePay API Key</label>
-        <input id="gp-apikey" type="text" class="uc-input mono w-full" placeholder="sk_live_…">
+        <label class="text-xs uppercase tracking-wide text-gray-400">GatePay API Key (SK Live)</label>
+        <div class="flex gap-2">
+          <input id="gp-apikey" type="text" class="uc-input mono flex-1" placeholder="sk_live_…">
+          <button type="button" onclick="gpClear('api_key')" class="uc-sbtn" title="Hapus API key tersimpan">🗑️</button>
+        </div>
         <p class="text-xs text-gray-500 mt-1">Saat ini: <span id="gp-apikey-masked" class="mono">-</span></p>
       </div>
       <div>
         <label class="text-xs uppercase tracking-wide text-gray-400">Callback Secret (HMAC)</label>
-        <input id="gp-secret" type="text" class="uc-input mono w-full" placeholder="Paste callback secret dari dashboard GatePay">
+        <div class="flex gap-2">
+          <input id="gp-secret" type="text" class="uc-input mono flex-1" placeholder="Paste callback secret dari dashboard GatePay">
+          <button type="button" onclick="gpClear('callback_secret')" class="uc-sbtn" title="Hapus callback secret tersimpan">🗑️</button>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Status: <span id="gp-secret-status" class="mono">-</span></p>
       </div>
       <div>
         <label class="text-xs uppercase tracking-wide text-gray-400">Notify URL (paste ke GatePay dashboard)</label>
@@ -35,9 +42,10 @@
         <textarea id="gp-thanks" rows="3" class="uc-input w-full" placeholder="✅ Pembayaran diterima, terima kasih! 🙏"></textarea>
         <p class="text-xs text-gray-500 mt-1">Variabel: <code>{amount_rp}</code> <code>{unique_rp}</code> <code>{ref}</code></p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button type="submit" class="uc-mbtn">💾 Simpan</button>
         <button type="button" onclick="gpTest()" class="uc-sbtn">🔌 Test Koneksi</button>
+        <button type="button" onclick="gpClear('all')" class="uc-sbtn" style="background:#7f1d1d;color:#fff">🗑️ Hapus Semua Setting</button>
       </div>
     </form>
   </div>
@@ -71,9 +79,17 @@ async function loadSettings(){
   document.getElementById('gp-loading').classList.add('hidden');
   document.getElementById('gp-form').classList.remove('hidden');
   document.getElementById('gp-apikey-masked').textContent = d.api_key_masked || '(kosong)';
+  document.getElementById('gp-secret-status').textContent = d.has_callback_secret ? '✓ tersimpan' : '(kosong)';
   document.getElementById('gp-notify').checked = !!d.gatepay_notify_on_paid;
   document.getElementById('gp-thanks').value = d.gatepay_thanks_text || '';
   document.getElementById('gp-notify-url').value = location.origin + '/api/public/webhooks/gatepay';
+}
+
+async function gpClear(field){
+  const label = {api_key:'API Key', callback_secret:'Callback Secret', thanks_text:'pesan terima kasih', all:'SEMUA setting GatePay'}[field] || field;
+  if(!confirm('Hapus ' + label + ' untuk akun aktif ini?')) return;
+  const r = await fetch('/api/gatepay/settings/' + field, {method:'DELETE', credentials:'same-origin'});
+  if(r.ok){ loadSettings(); alert('Terhapus'); } else alert('Gagal: ' + await r.text());
 }
 
 document.getElementById('gp-form').addEventListener('submit', async (e) => {
