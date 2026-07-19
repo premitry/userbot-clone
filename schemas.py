@@ -447,3 +447,41 @@ class DashboardStats(BaseModel):
     total_commands: int
     total_errors: int
     recent_logs: list[CommandLogResponse]
+
+
+# ── GatePay ──
+class GatePaySettings(BaseModel):
+    account_id: int
+    has_api_key: bool = False
+    has_callback_secret: bool = False
+    api_key_masked: str = ""
+    gatepay_notify_on_paid: bool = True
+    gatepay_thanks_text: str = ""
+
+
+class GatePaySettingsUpdate(BaseModel):
+    gatepay_api_key: Optional[str] = None
+    gatepay_callback_secret: Optional[str] = None
+    gatepay_notify_on_paid: Optional[bool] = None
+    gatepay_thanks_text: Optional[str] = None
+
+
+class GatePayOrderResponse(BaseModel):
+    id: int
+    account_id: Optional[int] = None
+    message_id: Optional[int] = None
+    provider: str = "gatepay"
+    order_id: str
+    reference: Optional[str] = None
+    chat_id: Optional[str] = None
+    chat_title: Optional[str] = None
+    tg_message_id: Optional[int] = None
+    base_amount: int = 0
+    unique_amount: int = 0
+    status: str = "pending"
+    checkout_url: Optional[str] = None
+    paid_at: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
