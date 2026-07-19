@@ -115,7 +115,19 @@ async function loadSettings(){
   document.getElementById('gp-notify').checked = !!d.gatepay_notify_on_paid;
   // Kalau user belum pernah set, isi otomatis dengan default (bisa diubah/simpan).
   document.getElementById('gp-thanks').value = (d.gatepay_thanks_text && d.gatepay_thanks_text.trim()) ? d.gatepay_thanks_text : GP_DEFAULT_THANKS;
+  const secs = Number(d.gatepay_expires_in || 900);
+  document.getElementById('gp-expires-min').value = Math.max(1, Math.round(secs/60));
+  document.getElementById('gp-expires-sec').textContent = secs;
   document.getElementById('gp-notify-url').value = location.origin + '/api/public/webhooks/gatepay';
+}
+
+document.getElementById('gp-expires-min').addEventListener('input', (e) => {
+  const m = Math.max(1, Number(e.target.value||0));
+  document.getElementById('gp-expires-sec').textContent = m*60;
+});
+function setExp(m){
+  document.getElementById('gp-expires-min').value = m;
+  document.getElementById('gp-expires-sec').textContent = m*60;
 }
 
 function gpResetThanks(){
