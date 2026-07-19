@@ -178,6 +178,11 @@ def page_settings(request: Request, db: Session = Depends(get_db)):
     return _render(request, db, "settings.html")
 
 
+@router.get("/payments", response_class=HTMLResponse)
+def page_payments(request: Request, db: Session = Depends(get_db)):
+    return _render(request, db, "payments.html")
+
+
 @router.get("/groups", response_class=HTMLResponse)
 def page_groups(request: Request, db: Session = Depends(get_db)):
     # Groups digabung ke Targets
