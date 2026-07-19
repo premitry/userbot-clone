@@ -136,7 +136,6 @@ document.getElementById('gp-form').addEventListener('submit', async (e) => {
   const body = {
     gatepay_notify_on_paid: document.getElementById('gp-notify').checked,
     gatepay_thanks_text: document.getElementById('gp-thanks').value,
-    gatepay_expires_in: Math.max(1, Number(document.getElementById('gp-expires-min').value||15)) * 60,
   };
   const k = document.getElementById('gp-apikey').value.trim();
   const s = document.getElementById('gp-secret').value.trim();
