@@ -149,6 +149,19 @@ async function gpTest(){
   alert(r.ok ? '✅ Koneksi OK\n' + t : '❌ ' + t);
 }
 
+async function syncOrders(){
+  const btn = event && event.target; if(btn){ btn.disabled=true; btn.textContent='⏳ Sync...'; }
+  try {
+    const r = await fetch('/api/gatepay/orders/sync', {method:'POST', credentials:'same-origin'});
+    const t = await r.text();
+    if(r.ok){
+      try { const d = JSON.parse(t); alert(`✅ Sync selesai\nDicek: ${d.checked}\nDiupdate: ${d.updated}` + (d.errors&&d.errors.length?`\nError: ${d.errors.length}`:'')); }
+      catch(_){ alert('✅ ' + t); }
+      loadOrders();
+    } else alert('❌ ' + t);
+  } finally { if(btn){ btn.disabled=false; btn.textContent='🔁 Sync Status'; } }
+}
+
 async function loadOrders(){
   const r = await fetch('/api/gatepay/orders?limit=100', {credentials:'same-origin'});
   const tb = document.getElementById('gp-orders');
