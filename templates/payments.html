@@ -80,7 +80,17 @@
 function fmtRp(n){ return 'Rp' + (Number(n||0)).toLocaleString('id-ID'); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
 
+let GP_DEFAULT_THANKS = '✅ Pembayaran diterima, terima kasih! 🙏';
+
+async function loadDefaults(){
+  try {
+    const r = await fetch('/api/gatepay/defaults', {credentials:'same-origin'});
+    if(r.ok){ const d = await r.json(); if(d.thanks_text) GP_DEFAULT_THANKS = d.thanks_text; }
+  } catch(_){}
+}
+
 async function loadSettings(){
+  await loadDefaults();
   const r = await fetch('/api/gatepay/settings', {credentials:'same-origin'});
   if(!r.ok){ document.getElementById('gp-loading').textContent = 'Gagal muat settings (pilih akun aktif dulu?).'; return; }
   const d = await r.json();
@@ -89,8 +99,13 @@ async function loadSettings(){
   document.getElementById('gp-apikey-masked').textContent = d.api_key_masked || '(kosong)';
   document.getElementById('gp-secret-status').textContent = d.has_callback_secret ? '✓ tersimpan' : '(kosong)';
   document.getElementById('gp-notify').checked = !!d.gatepay_notify_on_paid;
-  document.getElementById('gp-thanks').value = d.gatepay_thanks_text || '';
+  // Kalau user belum pernah set, isi otomatis dengan default (bisa diubah/simpan).
+  document.getElementById('gp-thanks').value = (d.gatepay_thanks_text && d.gatepay_thanks_text.trim()) ? d.gatepay_thanks_text : GP_DEFAULT_THANKS;
   document.getElementById('gp-notify-url').value = location.origin + '/api/public/webhooks/gatepay';
+}
+
+function gpResetThanks(){
+  document.getElementById('gp-thanks').value = GP_DEFAULT_THANKS;
 }
 
 async function gpClear(field){
@@ -98,6 +113,19 @@ async function gpClear(field){
   if(!confirm('Hapus ' + label + ' untuk akun aktif ini?')) return;
   const r = await fetch('/api/gatepay/settings/' + field, {method:'DELETE', credentials:'same-origin'});
   if(r.ok){ loadSettings(); alert('Terhapus'); } else alert('Gagal: ' + await r.text());
+}
+
+async function gpTestThanks(){
+  const chat = document.getElementById('gp-test-chat').value.trim();
+  if(!chat){ alert('Isi chat_id atau @username dulu'); return; }
+  const text = document.getElementById('gp-thanks').value;
+  const r = await fetch('/api/gatepay/test-thanks', {
+    method:'POST', credentials:'same-origin',
+    headers:{'content-type':'application/json'},
+    body: JSON.stringify({chat_id: chat, text})
+  });
+  const t = await r.text();
+  alert(r.ok ? '✅ Terkirim\n\n' + t : '❌ Gagal kirim\n\n' + t);
 }
 
 document.getElementById('gp-form').addEventListener('submit', async (e) => {
