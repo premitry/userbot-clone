@@ -42,20 +42,7 @@
         <textarea id="gp-thanks" rows="3" class="uc-input w-full" placeholder="✅ Pembayaran diterima, terima kasih! 🙏"></textarea>
         <p class="text-xs text-gray-500 mt-1">Variabel: <code>{amount_rp}</code> <code>{unique_rp}</code> <code>{ref}</code> · <button type="button" onclick="gpResetThanks()" class="underline">pakai default</button></p>
       </div>
-      <div>
-        <label class="text-xs uppercase tracking-wide text-gray-400">Masa Aktif QRIS (menit)</label>
-        <div class="flex items-center gap-2">
-          <input id="gp-expires-min" type="number" min="1" max="1440" step="1" class="uc-input mono w-32" placeholder="15">
-          <span class="text-xs text-gray-500">= <span id="gp-expires-sec" class="mono">900</span> detik · setelah lewat waktu ini QRIS otomatis expired di GatePay</span>
-        </div>
-        <div class="flex gap-1 mt-1 text-xs">
-          <button type="button" onclick="setExp(5)" class="uc-sbtn">5m</button>
-          <button type="button" onclick="setExp(15)" class="uc-sbtn">15m</button>
-          <button type="button" onclick="setExp(30)" class="uc-sbtn">30m</button>
-          <button type="button" onclick="setExp(60)" class="uc-sbtn">1j</button>
-          <button type="button" onclick="setExp(180)" class="uc-sbtn">3j</button>
-        </div>
-      </div>
+      <p class="text-xs text-gray-500">💡 <b>Masa aktif QRIS</b> ikut setting <i>Auto-hapus</i> per command (menu <a href="/messages" class="underline">Commands</a>). Jadi satu setting untuk hapus pesan + expired di GatePay.</p>
       <div class="flex items-center gap-2">
         <input id="gp-test-chat" type="text" class="uc-input mono text-xs flex-1 max-w-xs" placeholder="chat_id / @username">
         <button type="button" onclick="gpTestThanks()" class="uc-sbtn text-xs">📨 Test</button>
