@@ -167,6 +167,11 @@ async def _execute(client, message, msg, arg, db):
 
     # ── Dynamic QRIS ──
     if msg.type == "dynamic_qris":
+        provider = (getattr(msg, "qris_provider", None) or "local").lower()
+        if provider == "gatepay":
+            await _execute_gatepay_qris(client, message, msg, arg, db)
+            return
+
         from worker.qris_gen import build_dynamic_qris, generate_qris_image, parse_amount
         base = msg.qris_payload if msg.qris_payload else _get_setting(db, "qris_base_payload", "")
         dynamic_on = _get_setting(db, "qris_dynamic_amount", "1") != "0"
@@ -289,3 +294,110 @@ async def _execute(client, message, msg, arg, db):
         except Exception:
             pass
         await client.send_message(chat_id, content or msg.name)
+
+
+async def _execute_gatepay_qris(client, message, msg, arg, db):
+    """QRIS via GatePay: buat order, kirim QR, simpan PaymentOrder untuk webhook."""
+    import asyncio as _asyncio
+    from datetime import datetime
+    from models import PaymentOrder, TelegramAccount
+    from worker.qris_gen import generate_qris_image, parse_amount
+    from worker.gatepay_client import GatePayError, create_order
+
+    chat_id = message.chat.id
+    content = (msg.content or "").replace("{arg}", arg)
+
+    acc = db.query(TelegramAccount).filter(TelegramAccount.id == msg.account_id).first()
+    api_key = (acc.gatepay_api_key or "").strip() if acc else ""
+    if not api_key:
+        raise ValueError("GatePay API key belum diatur — buka menu Payments → Settings")
+
+    try:
+        amount = parse_amount(arg, allow_short=True)
+    except Exception:
+        raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
+
+    reference = f"tg_{chat_id}_{message.id}"
+    try:
+        order = await create_order(api_key, amount, reference=reference)
+    except GatePayError as e:
+        try:
+            await message.edit_text(f"\u26a0\ufe0f {e}")
+        except Exception:
+            await client.send_message(chat_id, f"\u26a0\ufe0f {e}")
+        raise
+
+    payload = order.get("qris") or ""
+    unique_amount = int(order.get("unique_amount") or amount)
+    order_id = str(order.get("id") or "")
+    checkout_url = order.get("checkout_url") or ""
+
+    img_path = generate_qris_image(
+        payload,
+        frame=(getattr(msg, "qris_frame", None) or "none"),
+        size=(getattr(msg, "qris_size", None) or "small"),
+    )
+
+    pretty_base = _fmt_amount(amount)
+    pretty_uniq = _fmt_amount(unique_amount)
+    replacements = {
+        "{amount}": pretty_base,
+        "{amount_rp}": "Rp" + pretty_base,
+        "{unique}": pretty_uniq,
+        "{unique_rp}": "Rp" + pretty_uniq,
+        "{checkout_url}": checkout_url,
+        "{ref}": reference,
+    }
+    caption = content or f"💳 Bayar tepat *Rp{pretty_uniq}* (nominal unik).\nHarga: Rp{pretty_base}"
+    footer = (msg.qris_footer_text or "").strip()
+    if footer:
+        caption = caption + "\n\n" + footer
+    for k, v in replacements.items():
+        caption = caption.replace(k, v)
+
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+    sent = await client.send_photo(chat_id, img_path, caption=caption)
+    if img_path and os.path.exists(img_path):
+        os.remove(img_path)
+
+    # Simpan order untuk webhook.
+    try:
+        po = PaymentOrder(
+            account_id=msg.account_id,
+            message_id=msg.id,
+            provider="gatepay",
+            order_id=order_id,
+            reference=reference,
+            chat_id=str(chat_id),
+            chat_title=getattr(message.chat, "title", None) or getattr(message.chat, "first_name", None),
+            tg_message_id=sent.id if sent else None,
+            base_amount=amount,
+            unique_amount=unique_amount,
+            status="pending",
+            checkout_url=checkout_url,
+            qris_payload=payload,
+            created_at=datetime.utcnow(),
+        )
+        db.add(po)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"⚠️ Gagal simpan PaymentOrder: {e}")
+
+    # Auto-delete jika di-set.
+    try:
+        ttl = int(msg.qris_auto_delete_seconds or 0)
+    except Exception:
+        ttl = 0
+    if ttl > 0 and sent is not None:
+        async def _auto_del(_client, _cid, _mid, _delay):
+            try:
+                await _asyncio.sleep(_delay)
+                await _client.delete_messages(_cid, _mid)
+            except Exception:
+                pass
+        _asyncio.create_task(_auto_del(client, chat_id, sent.id, ttl))

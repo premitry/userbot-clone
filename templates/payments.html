@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block nav_payments %}active{% endblock %}
+
+{% block content %}
+<div class="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-display font-bold">Payments · GatePay</h1>
+    <p class="text-sm text-gray-400">QRIS auto-konfirmasi via <a href="https://gatepay.biz.id/docs" target="_blank" class="underline">GatePay</a>. Setiap akun Telegram punya API key sendiri (boleh sama).</p>
+  </div>
+
+  <div class="card p-5 space-y-4">
+    <h2 class="font-semibold text-lg">Settings (akun aktif)</h2>
+    <div id="gp-loading" class="text-sm text-gray-400">Memuat…</div>
+    <form id="gp-form" class="hidden space-y-3">
+      <div>
+        <label class="text-xs uppercase tracking-wide text-gray-400">GatePay API Key</label>
+        <input id="gp-apikey" type="text" class="uc-input mono w-full" placeholder="sk_live_…">
+        <p class="text-xs text-gray-500 mt-1">Saat ini: <span id="gp-apikey-masked" class="mono">-</span></p>
+      </div>
+      <div>
+        <label class="text-xs uppercase tracking-wide text-gray-400">Callback Secret (HMAC)</label>
+        <input id="gp-secret" type="text" class="uc-input mono w-full" placeholder="Paste callback secret dari dashboard GatePay">
+      </div>
+      <div>
+        <label class="text-xs uppercase tracking-wide text-gray-400">Notify URL (paste ke GatePay dashboard)</label>
+        <input id="gp-notify-url" type="text" class="uc-input mono w-full" readonly>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="gp-notify" type="checkbox" class="w-4 h-4">
+        <label for="gp-notify" class="text-sm">Balas otomatis ke chat saat pembayaran lunas</label>
+      </div>
+      <div>
+        <label class="text-xs uppercase tracking-wide text-gray-400">Pesan Terima Kasih (auto-reply saat lunas)</label>
+        <textarea id="gp-thanks" rows="3" class="uc-input w-full" placeholder="✅ Pembayaran diterima, terima kasih! 🙏"></textarea>
+        <p class="text-xs text-gray-500 mt-1">Variabel: <code>{amount_rp}</code> <code>{unique_rp}</code> <code>{ref}</code></p>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="uc-mbtn">💾 Simpan</button>
+        <button type="button" onclick="gpTest()" class="uc-sbtn">🔌 Test Koneksi</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-lg">Orders</h2>
+      <button onclick="loadOrders()" class="uc-sbtn">🔄 Refresh</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="text-xs text-gray-400 uppercase">
+          <tr><th class="text-left py-2">Waktu</th><th class="text-left">Ref</th><th class="text-right">Base</th><th class="text-right">Unik</th><th class="text-left">Status</th><th class="text-left">Chat</th></tr>
+        </thead>
+        <tbody id="gp-orders"><tr><td colspan="6" class="py-4 text-center text-gray-500">Memuat…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fmtRp(n){ return 'Rp' + (Number(n||0)).toLocaleString('id-ID'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+
+async function loadSettings(){
+  const r = await fetch('/api/gatepay/settings', {credentials:'same-origin'});
+  if(!r.ok){ document.getElementById('gp-loading').textContent = 'Gagal muat settings (pilih akun aktif dulu?).'; return; }
+  const d = await r.json();
+  document.getElementById('gp-loading').classList.add('hidden');
+  document.getElementById('gp-form').classList.remove('hidden');
+  document.getElementById('gp-apikey-masked').textContent = d.api_key_masked || '(kosong)';
+  document.getElementById('gp-notify').checked = !!d.gatepay_notify_on_paid;
+  document.getElementById('gp-thanks').value = d.gatepay_thanks_text || '';
+  document.getElementById('gp-notify-url').value = location.origin + '/api/public/webhooks/gatepay';
+}
+
+document.getElementById('gp-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    gatepay_notify_on_paid: document.getElementById('gp-notify').checked,
+    gatepay_thanks_text: document.getElementById('gp-thanks').value,
+  };
+  const k = document.getElementById('gp-apikey').value.trim();
+  const s = document.getElementById('gp-secret').value.trim();
+  if(k) body.gatepay_api_key = k;
+  if(s) body.gatepay_callback_secret = s;
+  const r = await fetch('/api/gatepay/settings', {method:'PUT', credentials:'same-origin', headers:{'content-type':'application/json'}, body: JSON.stringify(body)});
+  if(r.ok){ document.getElementById('gp-apikey').value=''; document.getElementById('gp-secret').value=''; loadSettings(); alert('Tersimpan'); }
+  else alert('Gagal simpan: ' + await r.text());
+});
+
+async function gpTest(){
+  const r = await fetch('/api/gatepay/test', {method:'POST', credentials:'same-origin'});
+  const t = await r.text();
+  alert(r.ok ? '✅ Koneksi OK\n' + t : '❌ ' + t);
+}
+
+async function loadOrders(){
+  const r = await fetch('/api/gatepay/orders?limit=100', {credentials:'same-origin'});
+  const tb = document.getElementById('gp-orders');
+  if(!r.ok){ tb.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-red-400">Gagal muat</td></tr>'; return; }
+  const rows = await r.json();
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-gray-500">Belum ada order</td></tr>'; return; }
+  tb.innerHTML = rows.map(o => {
+    const badge = ({paid:'bg-green-600', pending:'bg-yellow-600', expired:'bg-gray-600', cancelled:'bg-red-600'})[o.status] || 'bg-gray-600';
+    return `<tr class="border-t border-gray-800">
+      <td class="py-2">${esc(new Date(o.created_at).toLocaleString('id-ID'))}</td>
+      <td class="mono text-xs">${esc(o.reference||o.order_id)}</td>
+      <td class="text-right">${fmtRp(o.base_amount)}</td>
+      <td class="text-right mono">${fmtRp(o.unique_amount)}</td>
+      <td><span class="px-2 py-0.5 rounded text-xs ${badge}">${esc(o.status)}</span></td>
+      <td class="text-xs text-gray-400">${esc(o.chat_title||o.chat_id||'')}</td>
+    </tr>`;
+  }).join('');
+}
+
+loadSettings();
+loadOrders();
+setInterval(loadOrders, 15000);
+</script>
+{% endblock %}

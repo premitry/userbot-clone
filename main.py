@@ -25,6 +25,8 @@ from routers.queue import router as queue_router
 from routers.targets import router as targets_router
 from routers.dashboard import router as dashboard_router
 from routers.accounts import router as accounts_router
+from routers.gatepay import router as gatepay_router
+from routers.webhooks import router as webhooks_router
 
 
 @asynccontextmanager
@@ -83,6 +85,8 @@ app.include_router(channels_router)
 app.include_router(queue_router)
 app.include_router(targets_router)
 app.include_router(dashboard_router)
+app.include_router(gatepay_router)
+app.include_router(webhooks_router)
 
 
 if __name__ == "__main__":

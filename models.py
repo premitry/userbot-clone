@@ -38,6 +38,11 @@ class TelegramAccount(Base):
     is_connected = Column(Boolean, default=False)
     added_at = Column(DateTime, default=datetime.utcnow)
     last_connected = Column(DateTime, nullable=True)
+    # GatePay per-akun (boleh sama antar akun, sesuai preferensi user).
+    gatepay_api_key = Column(String(255), nullable=True)
+    gatepay_callback_secret = Column(String(255), nullable=True)
+    gatepay_notify_on_paid = Column(Boolean, default=True)
+    gatepay_thanks_text = Column(Text, nullable=True)
 
     groups = relationship("Group", back_populates="account")
     account_targets = relationship(
@@ -332,6 +337,8 @@ class Message(Base):
     qris_frame = Column(String(255), nullable=True, default="none")
     # Ukuran QR: 'small' (default) | 'medium' | 'large'
     qris_size = Column(String(20), nullable=True, default="small")
+    # Provider QRIS: 'local' (default, offline generate) | 'gatepay' (auto-confirm)
+    qris_provider = Column(String(20), nullable=True, default="local")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -412,6 +419,36 @@ class BotStatus(Base):
     total_commands = Column(Integer, default=0)
     total_errors = Column(Integer, default=0)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PaymentOrder(Base):
+    """Order pembayaran GatePay — 1 baris per /qris (mode gatepay).
+
+    Dipakai untuk: (a) mapping webhook order.paid -> chat asal, (b) rekap
+    pemasukan di menu Payments, (c) auto-reply "lunas" ke customer.
+    """
+    __tablename__ = "payment_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("telegram_accounts.id"), index=True, nullable=True)
+    message_id = Column(Integer, ForeignKey("messages.id"), index=True, nullable=True)
+    provider = Column(String(20), default="gatepay")
+    # ID order dari provider (mis. ord_xxx). Unik agar webhook idempotent.
+    order_id = Column(String(120), unique=True, index=True, nullable=False)
+    reference = Column(String(120), index=True, nullable=True)
+    chat_id = Column(String(50), index=True, nullable=True)
+    chat_title = Column(String(255), nullable=True)
+    tg_message_id = Column(Integer, nullable=True)  # id pesan QR di Telegram (untuk hapus/reply)
+    base_amount = Column(Integer, default=0)
+    unique_amount = Column(Integer, default=0)
+    # status: pending | paid | expired | cancelled | failed
+    status = Column(String(20), default="pending", index=True)
+    checkout_url = Column(String(500), nullable=True)
+    qris_payload = Column(Text, nullable=True)
+    raw_response = Column(Text, nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 # ── Enkripsi session string otomatis (Fernet) ──────────────────────────

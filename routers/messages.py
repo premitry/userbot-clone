@@ -154,6 +154,7 @@ def create_message(body: MessageCreate, db: Session = Depends(get_db), user: Use
         qris_footer_text=body.qris_footer_text,
         qris_frame=body.qris_frame or "none",
         qris_size=body.qris_size or "small",
+        qris_provider=body.qris_provider or "local",
         is_active=True if body.is_active is None else body.is_active,
     )
     db.add(m)
@@ -189,7 +190,8 @@ def update_message(message_id: int, body: MessageUpdate, db: Session = Depends(g
             raise HTTPException(400, str(e))
     for field in ("name", "type", "action", "content", "media_url", "channel_post_url",
                   "channel_mode", "channel_chat_id", "qris_payload", "qris_min", "qris_max",
-                  "qris_auto_delete_seconds", "qris_footer_text", "qris_frame", "qris_size", "is_active"):
+                  "qris_auto_delete_seconds", "qris_footer_text", "qris_frame", "qris_size",
+                  "qris_provider", "is_active"):
         val = getattr(body, field)
         if field == "qris_payload" and val is not None:
             val = qris_payload

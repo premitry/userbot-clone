@@ -244,7 +244,13 @@
         </div>
 
         <div id="wrap-qris" class="hidden uc-field">
-          <label class="uc-label">Payload QRIS (base)</label>
+          <label class="uc-label">Provider QRIS</label>
+          <select id="m-qris-provider" class="uc-input">
+            <option value="local">Local (offline, tanpa konfirmasi otomatis)</option>
+            <option value="gatepay">GatePay (nominal unik + auto-konfirmasi lunas)</option>
+          </select>
+          <p class="uc-hint">GatePay: butuh API key di menu <a href="/payments" class="underline">Payments</a>. Base payload dikelola di dashboard GatePay, tidak perlu diisi di sini.</p>
+          <label class="uc-label" style="margin-top:12px;">Payload QRIS (base) — khusus mode Local</label>
           <textarea id="m-qpayload" rows="2" class="uc-input mono" placeholder="00020101021126... (hasil decode gambar atau paste manual)"></textarea>
           <div class="uc-inline">
             <input type="file" id="m-qris-file" accept="image/*" class="uc-file" style="flex:0 0 auto;min-width:0;">
@@ -586,6 +592,7 @@ function openEdit(id) {
     document.getElementById('m-channel').value = m.channel_post_url || '';
     document.getElementById('m-channel-mode').value = m.channel_mode || 'specific';
     document.getElementById('m-qpayload').value = m.qris_payload || '';
+    document.getElementById('m-qris-provider').value = m.qris_provider || 'local';
     var ttlSec = (m.qris_auto_delete_seconds != null ? parseInt(m.qris_auto_delete_seconds, 10) : 0) || 0;
     if (ttlSec > 0) {
         var mins = Math.max(1, Math.round(ttlSec / 60));
@@ -650,7 +657,8 @@ document.getElementById('msg-form').addEventListener('submit', async function (e
         qris_auto_delete_seconds: parseInt(document.getElementById('m-qris-ttl').value || '0', 10) || 0,
         qris_footer_text: document.getElementById('m-qris-footer').value || null,
         qris_frame: document.getElementById('m-qris-frame').value || 'none',
-        qris_size: document.getElementById('m-qris-size').value || 'small'
+        qris_size: document.getElementById('m-qris-size').value || 'small',
+        qris_provider: document.getElementById('m-qris-provider').value || 'local'
     };
     if (type === 'workflow') { body.steps = STEPS; }
     var url = id ? ('/api/messages/' + id) : '/api/messages/';

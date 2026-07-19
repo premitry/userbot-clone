@@ -87,9 +87,16 @@ _MIGRATIONS = {
         "qris_footer_text": "TEXT",
         "qris_frame": "VARCHAR(255) DEFAULT 'none'",
         "qris_size": "VARCHAR(20) DEFAULT 'small'",
+        "qris_provider": "VARCHAR(20) DEFAULT 'local'",
         "channel_mode": "VARCHAR(20) DEFAULT 'specific'",
         "channel_chat_id": "VARCHAR(50)",
         "account_id": "INTEGER",
+    },
+    "telegram_accounts": {
+        "gatepay_api_key": "VARCHAR(255)",
+        "gatepay_callback_secret": "VARCHAR(255)",
+        "gatepay_notify_on_paid": "BOOLEAN DEFAULT 1",
+        "gatepay_thanks_text": "TEXT",
     },
     "command_logs": {
         "source": "VARCHAR(20) DEFAULT 'manual'",
