@@ -85,6 +85,8 @@ app.include_router(channels_router)
 app.include_router(queue_router)
 app.include_router(targets_router)
 app.include_router(dashboard_router)
+app.include_router(gatepay_router)
+app.include_router(webhooks_router)
 
 
 if __name__ == "__main__":
