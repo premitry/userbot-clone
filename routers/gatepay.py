@@ -144,6 +144,72 @@ def clear_setting(
 
 
 
+@router.post("/orders/sync")
+async def sync_orders(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Cek ulang status order pending/aktif ke GatePay & update DB.
+
+    Berguna kalau order sudah cancelled/expired/paid di sisi GatePay tapi
+    webhook nggak nyampe (mis. server down / URL salah).
+    """
+    from datetime import datetime as _dt
+    from worker.gatepay_client import get_order as _get_order
+
+    acc = _require_active(db)
+    if not acc.gatepay_api_key:
+        raise HTTPException(400, "API key GatePay belum diisi")
+
+    q = (
+        db.query(PaymentOrder)
+        .filter(PaymentOrder.account_id == acc.id)
+        .filter(PaymentOrder.status == "pending")
+        .order_by(PaymentOrder.created_at.desc())
+        .limit(min(limit, 200))
+    )
+    orders = q.all()
+    updated = 0
+    errors: list[str] = []
+    for o in orders:
+        try:
+            data = await _get_order(acc.gatepay_api_key, o.order_id)
+        except GatePayError as e:
+            # 404 = order sudah hilang di sisi provider → anggap cancelled.
+            if getattr(e, "status", 0) == 404:
+                o.status = "cancelled"
+                updated += 1
+                continue
+            errors.append(f"{o.order_id}: {e}")
+            continue
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{o.order_id}: {e}")
+            continue
+
+        remote_status = str(data.get("status") or "").lower().strip()
+        mapping = {
+            "paid": "paid", "success": "paid", "settled": "paid",
+            "pending": "pending", "waiting": "pending", "unpaid": "pending",
+            "expired": "expired",
+            "cancel": "cancelled", "cancelled": "cancelled", "canceled": "cancelled",
+            "failed": "failed", "error": "failed",
+        }
+        new_status = mapping.get(remote_status, o.status)
+        if new_status != o.status:
+            o.status = new_status
+            if new_status == "paid" and not o.paid_at:
+                paid_at = data.get("paid_at")
+                try:
+                    o.paid_at = _dt.utcfromtimestamp(int(paid_at)) if paid_at else _dt.utcnow()
+                except Exception:
+                    o.paid_at = _dt.utcnow()
+            updated += 1
+
+    db.commit()
+    return {"ok": True, "checked": len(orders), "updated": updated, "errors": errors}
+
+
 @router.get("/orders", response_model=list[GatePayOrderResponse])
 def list_orders(
     limit: int = 100,
