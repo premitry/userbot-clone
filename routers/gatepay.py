@@ -77,6 +77,46 @@ async def test(db: Session = Depends(get_db), user: User = Depends(get_current_u
         raise HTTPException(400, str(e))
 
 
+@router.get("/defaults")
+def get_defaults(user: User = Depends(get_current_user)):
+    """Default value untuk field yang bisa dikustom user."""
+    return {"thanks_text": DEFAULT_THANKS_TEXT}
+
+
+class TestThanksBody(BaseModel):
+    chat_id: str
+    text: str | None = None  # kalau diisi, pakai text ini (preview sebelum simpan)
+
+
+@router.post("/test-thanks")
+async def test_thanks(
+    body: TestThanksBody,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Kirim preview pesan terima kasih ke chat tertentu (untuk memastikan worker aktif)."""
+    acc = _require_active(db)
+    try:
+        chat_id: int | str = int(body.chat_id)
+    except (TypeError, ValueError):
+        chat_id = (body.chat_id or "").strip()
+        if not chat_id:
+            raise HTTPException(400, "chat_id wajib diisi (angka atau @username)")
+
+    template = body.text if body.text is not None else acc.gatepay_thanks_text
+    msg = render_thanks(template, base_amount=25000, unique_amount=25037, ref="TEST-PREVIEW")
+
+    w = get_worker(acc.id)
+    if not w or not w.is_running:
+        raise HTTPException(400, "Worker akun aktif belum jalan. Start worker dulu di menu Accounts.")
+    try:
+        sent = await w.client.send_message(chat_id, msg)
+    except Exception as e:
+        raise HTTPException(400, f"Gagal kirim: {e}")
+    return {"ok": True, "message_id": getattr(sent, "id", None), "preview": msg}
+
+
+
 
 @router.delete("/settings/{field}")
 def clear_setting(
