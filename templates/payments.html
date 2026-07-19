@@ -56,9 +56,12 @@
   </div>
 
   <div class="card p-5">
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
       <h2 class="font-semibold text-lg">Orders</h2>
-      <button onclick="loadOrders()" class="uc-sbtn">🔄 Refresh</button>
+      <div class="flex gap-2">
+        <button onclick="syncOrders()" class="uc-sbtn" title="Cek ulang status pending ke GatePay">🔁 Sync Status</button>
+        <button onclick="loadOrders()" class="uc-sbtn">🔄 Refresh</button>
+      </div>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -144,6 +147,19 @@ async function gpTest(){
   const r = await fetch('/api/gatepay/test', {method:'POST', credentials:'same-origin'});
   const t = await r.text();
   alert(r.ok ? '✅ Koneksi OK\n' + t : '❌ ' + t);
+}
+
+async function syncOrders(){
+  const btn = event && event.target; if(btn){ btn.disabled=true; btn.textContent='⏳ Sync...'; }
+  try {
+    const r = await fetch('/api/gatepay/orders/sync', {method:'POST', credentials:'same-origin'});
+    const t = await r.text();
+    if(r.ok){
+      try { const d = JSON.parse(t); alert(`✅ Sync selesai\nDicek: ${d.checked}\nDiupdate: ${d.updated}` + (d.errors&&d.errors.length?`\nError: ${d.errors.length}`:'')); }
+      catch(_){ alert('✅ ' + t); }
+      loadOrders();
+    } else alert('❌ ' + t);
+  } finally { if(btn){ btn.disabled=false; btn.textContent='🔁 Sync Status'; } }
 }
 
 async function loadOrders(){
