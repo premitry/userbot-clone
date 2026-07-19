@@ -202,7 +202,9 @@ async def sync_orders(
             "failed": "failed", "error": "failed",
         }
         new_status = mapping.get(remote_status, o.status)
+        newly_paid = False
         if new_status != o.status:
+            was_paid = o.status == "paid"
             o.status = new_status
             if new_status == "paid" and not o.paid_at:
                 paid_at = data.get("paid_at")
@@ -210,7 +212,13 @@ async def sync_orders(
                     o.paid_at = _dt.utcfromtimestamp(int(paid_at)) if paid_at else _dt.utcnow()
                 except Exception:
                     o.paid_at = _dt.utcnow()
+            if new_status == "paid" and not was_paid:
+                newly_paid = True
             updated += 1
+        if newly_paid and acc.gatepay_notify_on_paid:
+            import asyncio as _asyncio
+            from routers.webhooks import _notify_paid as _notify
+            _asyncio.create_task(_notify(o, acc))
 
     db.commit()
     return {"ok": True, "checked": len(orders), "updated": updated, "errors": errors}
