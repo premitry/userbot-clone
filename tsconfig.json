@@ -2,8 +2,8 @@
   "compilerOptions": {
     "noEmit": true,
     "skipLibCheck": true,
-    "strict": false
+    "strict": false,
+    "allowJs": true
   },
-  "include": [],
-  "exclude": ["**/*"]
+  "files": ["_placeholder.d.ts"]
 }
