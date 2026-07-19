@@ -58,13 +58,11 @@ async def _notify_paid(order: PaymentOrder, account: TelegramAccount):
         return
     client = w.client
 
-    thanks = (account.gatepay_thanks_text or "").strip() or (
-        "✅ Pembayaran diterima, terima kasih! 🙏"
-    )
-    thanks = thanks.replace("{amount}", _fmt_amount(order.base_amount)).replace(
-        "{amount_rp}", "Rp" + _fmt_amount(order.base_amount)
-    ).replace("{unique_rp}", "Rp" + _fmt_amount(order.unique_amount)).replace(
-        "{ref}", order.reference or ""
+    thanks = render_thanks(
+        account.gatepay_thanks_text,
+        base_amount=order.base_amount,
+        unique_amount=order.unique_amount,
+        ref=order.reference or "",
     )
 
     try:
