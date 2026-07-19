@@ -56,9 +56,12 @@
   </div>
 
   <div class="card p-5">
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
       <h2 class="font-semibold text-lg">Orders</h2>
-      <button onclick="loadOrders()" class="uc-sbtn">🔄 Refresh</button>
+      <div class="flex gap-2">
+        <button onclick="syncOrders()" class="uc-sbtn" title="Cek ulang status pending ke GatePay">🔁 Sync Status</button>
+        <button onclick="loadOrders()" class="uc-sbtn">🔄 Refresh</button>
+      </div>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
