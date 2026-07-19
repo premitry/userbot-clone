@@ -592,6 +592,7 @@ function openEdit(id) {
     document.getElementById('m-channel').value = m.channel_post_url || '';
     document.getElementById('m-channel-mode').value = m.channel_mode || 'specific';
     document.getElementById('m-qpayload').value = m.qris_payload || '';
+    document.getElementById('m-qris-provider').value = m.qris_provider || 'local';
     var ttlSec = (m.qris_auto_delete_seconds != null ? parseInt(m.qris_auto_delete_seconds, 10) : 0) || 0;
     if (ttlSec > 0) {
         var mins = Math.max(1, Math.round(ttlSec / 60));
