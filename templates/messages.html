@@ -657,7 +657,8 @@ document.getElementById('msg-form').addEventListener('submit', async function (e
         qris_auto_delete_seconds: parseInt(document.getElementById('m-qris-ttl').value || '0', 10) || 0,
         qris_footer_text: document.getElementById('m-qris-footer').value || null,
         qris_frame: document.getElementById('m-qris-frame').value || 'none',
-        qris_size: document.getElementById('m-qris-size').value || 'small'
+        qris_size: document.getElementById('m-qris-size').value || 'small',
+        qris_provider: document.getElementById('m-qris-provider').value || 'local'
     };
     if (type === 'workflow') { body.steps = STEPS; }
     var url = id ? ('/api/messages/' + id) : '/api/messages/';
