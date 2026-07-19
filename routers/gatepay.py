@@ -43,6 +43,7 @@ def get_settings(db: Session = Depends(get_db), user: User = Depends(get_current
         api_key_masked=_mask(acc.gatepay_api_key),
         gatepay_notify_on_paid=bool(acc.gatepay_notify_on_paid),
         gatepay_thanks_text=acc.gatepay_thanks_text or "",
+        gatepay_expires_in=int(acc.gatepay_expires_in or 0) or 900,
     )
 
 
