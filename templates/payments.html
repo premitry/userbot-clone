@@ -42,13 +42,10 @@
         <textarea id="gp-thanks" rows="3" class="uc-input w-full" placeholder="✅ Pembayaran diterima, terima kasih! 🙏"></textarea>
         <p class="text-xs text-gray-500 mt-1">Variabel: <code>{amount_rp}</code> <code>{unique_rp}</code> <code>{ref}</code> · <button type="button" onclick="gpResetThanks()" class="underline">pakai default</button></p>
       </div>
-      <div class="rounded border border-gray-800 p-3 space-y-2">
-        <label class="text-xs uppercase tracking-wide text-gray-400">Test Kirim Pesan Terima Kasih</label>
-        <div class="flex gap-2">
-          <input id="gp-test-chat" type="text" class="uc-input mono flex-1" placeholder="chat_id (angka) atau @username">
-          <button type="button" onclick="gpTestThanks()" class="uc-sbtn">📨 Test Kirim</button>
-        </div>
-        <p class="text-xs text-gray-500">Pakai text di textarea di atas (belum perlu disimpan). Worker akun aktif harus jalan.</p>
+      <div class="flex items-center gap-2">
+        <input id="gp-test-chat" type="text" class="uc-input mono text-xs flex-1 max-w-xs" placeholder="chat_id / @username">
+        <button type="button" onclick="gpTestThanks()" class="uc-sbtn text-xs">📨 Test</button>
+        <span class="text-xs text-gray-500 hidden md:inline">preview pesan terima kasih</span>
       </div>
       <div class="flex flex-wrap gap-2">
         <button type="submit" class="uc-mbtn">💾 Simpan</button>
