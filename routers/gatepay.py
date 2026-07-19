@@ -6,15 +6,18 @@ Semua endpoint di-scope ke akun aktif (get_active_account_id).
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from active_account import get_active_account_id
 from auth import get_current_user
 from database import get_db
 from models import PaymentOrder, TelegramAccount, User
+from routers.webhooks import DEFAULT_THANKS_TEXT, render_thanks
 from schemas import (
     GatePayOrderResponse, GatePaySettings, GatePaySettingsUpdate,
 )
+from worker.client import get_worker
 from worker.gatepay_client import GatePayError, test_connection
 
 router = APIRouter(prefix="/api/gatepay", tags=["GatePay"])
