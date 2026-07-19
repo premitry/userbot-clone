@@ -1,0 +1,9 @@
+{
+  "name": "userbot",
+  "private": true,
+  "scripts": {
+    "build": "echo skip",
+    "build:dev": "echo skip",
+    "typecheck": "echo skip"
+  }
+}
