@@ -244,7 +244,13 @@
         </div>
 
         <div id="wrap-qris" class="hidden uc-field">
-          <label class="uc-label">Payload QRIS (base)</label>
+          <label class="uc-label">Provider QRIS</label>
+          <select id="m-qris-provider" class="uc-input">
+            <option value="local">Local (offline, tanpa konfirmasi otomatis)</option>
+            <option value="gatepay">GatePay (nominal unik + auto-konfirmasi lunas)</option>
+          </select>
+          <p class="uc-hint">GatePay: butuh API key di menu <a href="/payments" class="underline">Payments</a>. Base payload dikelola di dashboard GatePay, tidak perlu diisi di sini.</p>
+          <label class="uc-label" style="margin-top:12px;">Payload QRIS (base) — khusus mode Local</label>
           <textarea id="m-qpayload" rows="2" class="uc-input mono" placeholder="00020101021126... (hasil decode gambar atau paste manual)"></textarea>
           <div class="uc-inline">
             <input type="file" id="m-qris-file" accept="image/*" class="uc-file" style="flex:0 0 auto;min-width:0;">
