@@ -97,6 +97,7 @@ _MIGRATIONS = {
         "gatepay_callback_secret": "VARCHAR(255)",
         "gatepay_notify_on_paid": "BOOLEAN DEFAULT 1",
         "gatepay_thanks_text": "TEXT",
+        "gatepay_expires_in": "INTEGER DEFAULT 900",
     },
     "command_logs": {
         "source": "VARCHAR(20) DEFAULT 'manual'",
