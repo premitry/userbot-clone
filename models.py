@@ -43,6 +43,8 @@ class TelegramAccount(Base):
     gatepay_callback_secret = Column(String(255), nullable=True)
     gatepay_notify_on_paid = Column(Boolean, default=True)
     gatepay_thanks_text = Column(Text, nullable=True)
+    # Berapa lama QRIS aktif sebelum expired (detik). 0/None = pakai default GatePay.
+    gatepay_expires_in = Column(Integer, default=900)
 
     groups = relationship("Group", back_populates="account")
     account_targets = relationship(
