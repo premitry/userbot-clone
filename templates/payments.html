@@ -201,6 +201,6 @@ async function loadOrders(){
 
 loadSettings();
 loadOrders();
-setInterval(loadOrders, 15000);
+setInterval(async () => { await autoSyncOrders(); loadOrders(); }, 5000);
 </script>
 {% endblock %}
