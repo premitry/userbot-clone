@@ -318,7 +318,17 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
         raise ValueError("Format nominal tidak valid. Contoh: /qris 5000 atau /qris 5k")
 
     reference = f"tg_{chat_id}_{message.id}"
-    expires_in = int(getattr(acc, "gatepay_expires_in", 0) or 0) or None
+    # Masa aktif QRIS = TTL auto-hapus pesan (per command). Kalau Permanen (0),
+    # fallback ke default akun (gatepay_expires_in) supaya GatePay tetap punya batas.
+    ttl_msg = 0
+    try:
+        ttl_msg = int(msg.qris_auto_delete_seconds or 0)
+    except Exception:
+        ttl_msg = 0
+    if ttl_msg > 0:
+        expires_in = max(60, ttl_msg)  # GatePay minimum 60s
+    else:
+        expires_in = int(getattr(acc, "gatepay_expires_in", 0) or 0) or None
     try:
         order = await create_order(api_key, amount, reference=reference, expires_in=expires_in)
     except GatePayError as e:
