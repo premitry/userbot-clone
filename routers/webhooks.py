@@ -26,6 +26,18 @@ from models import PaymentOrder, TelegramAccount
 
 router = APIRouter(prefix="/api/public/webhooks", tags=["Webhooks"])
 
+DEFAULT_THANKS_TEXT = "✅ Pembayaran diterima, terima kasih! 🙏"
+
+
+def render_thanks(template: str, base_amount: int = 0, unique_amount: int = 0, ref: str = "") -> str:
+    text = (template or "").strip() or DEFAULT_THANKS_TEXT
+    return (
+        text.replace("{amount}", _fmt_amount(base_amount))
+            .replace("{amount_rp}", "Rp" + _fmt_amount(base_amount))
+            .replace("{unique_rp}", "Rp" + _fmt_amount(unique_amount))
+            .replace("{ref}", ref or "")
+    )
+
 
 def _verify(secret: str, raw: bytes, signature: str) -> bool:
     if not secret or not signature:
