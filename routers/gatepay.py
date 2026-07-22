@@ -218,7 +218,21 @@ async def sync_orders(
         if newly_paid and acc.gatepay_notify_on_paid:
             import asyncio as _asyncio
             from routers.webhooks import _notify_paid as _notify
-            _asyncio.create_task(_notify(o, acc))
+            # Worker Pyrogram jalan di loop/thread sendiri. Kalau kita cuma
+            # create_task di loop FastAPI, delete/send-nya bakal gagal diam-
+            # diam. Jadwalkan di loop worker via run_coroutine_threadsafe.
+            w = get_worker(acc.id)
+            scheduled = False
+            if w and w.is_running:
+                wloop = getattr(w.client, "loop", None)
+                if wloop is not None:
+                    try:
+                        _asyncio.run_coroutine_threadsafe(_notify(o, acc), wloop)
+                        scheduled = True
+                    except Exception as _e:
+                        errors.append(f"{o.order_id}: notify schedule: {_e}")
+            if not scheduled:
+                _asyncio.create_task(_notify(o, acc))
 
     db.commit()
     return {"ok": True, "checked": len(orders), "updated": updated, "errors": errors}
