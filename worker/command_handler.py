@@ -351,18 +351,30 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
 
     pretty_base = _fmt_amount(amount)
     pretty_uniq = _fmt_amount(unique_amount)
+    # Di mode GatePay, {amount}/{amount_rp} otomatis pakai UNIQUE amount
+    # (yang harus dibayar customer). {base}/{base_rp} tetap tersedia kalau
+    # user butuh nominal asli.
     replacements = {
-        "{amount}": pretty_base,
-        "{amount_rp}": "Rp" + pretty_base,
+        "{amount}": pretty_uniq,
+        "{amount_rp}": "Rp" + pretty_uniq,
         "{unique}": pretty_uniq,
         "{unique_rp}": "Rp" + pretty_uniq,
+        "{base}": pretty_base,
+        "{base_rp}": "Rp" + pretty_base,
         "{checkout_url}": checkout_url,
         "{ref}": reference,
     }
-    caption = content or f"💳 Total: *Rp{pretty_uniq}*"
     footer = (msg.qris_footer_text or "").strip()
-    if footer:
-        caption = caption + "\n\n" + footer
+    # Prioritas caption: content > footer > default. Cuma satu baris total
+    # yang tampil supaya nggak dobel.
+    if content:
+        caption = content
+        if footer:
+            caption = caption + "\n\n" + footer
+    elif footer:
+        caption = footer
+    else:
+        caption = f"🧾 Total tagihan: *Rp{pretty_uniq}*"
     for k, v in replacements.items():
         caption = caption.replace(k, v)
 
