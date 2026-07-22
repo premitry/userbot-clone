@@ -483,6 +483,8 @@ class GatePayOrderResponse(BaseModel):
     status: str = "pending"
     checkout_url: Optional[str] = None
     paid_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    telegram_cleaned_at: Optional[datetime] = None
     created_at: datetime
 
     class Config:

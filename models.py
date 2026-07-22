@@ -449,6 +449,8 @@ class PaymentOrder(Base):
     qris_payload = Column(Text, nullable=True)
     raw_response = Column(Text, nullable=True)
     paid_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    telegram_cleaned_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

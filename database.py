@@ -99,6 +99,10 @@ _MIGRATIONS = {
         "gatepay_thanks_text": "TEXT",
         "gatepay_expires_in": "INTEGER DEFAULT 900",
     },
+    "payment_orders": {
+        "expires_at": "DATETIME",
+        "telegram_cleaned_at": "DATETIME",
+    },
     "command_logs": {
         "source": "VARCHAR(20) DEFAULT 'manual'",
         "account_id": "INTEGER",

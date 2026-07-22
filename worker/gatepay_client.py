@@ -54,7 +54,8 @@ async def create_order(
     if reference:
         body["reference"] = reference
     if expires_in:
-        body["expires_in"] = int(expires_in)
+        # GatePay docs: field masa berlaku order adalah `ttl_seconds`.
+        body["ttl_seconds"] = int(expires_in)
     return await _request("POST", api_key, "/api/orders", json=body)
 
 
