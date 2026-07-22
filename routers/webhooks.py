@@ -12,7 +12,6 @@ Setelah signature valid & event = order.paid:
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import hmac
 import json
@@ -51,42 +50,96 @@ def _fmt_amount(n: int) -> str:
 
 
 async def _notify_paid(order: PaymentOrder, account: TelegramAccount):
-    """Kirim balasan Telegram bahwa pembayaran lunas + (opsional) hapus QR."""
+    """Kompatibilitas lama: bersihkan QR + kirim balasan lunas dari order object."""
+    return await cleanup_order_telegram(order.order_id, send_thanks=bool(account.gatepay_notify_on_paid))
+
+
+async def cleanup_order_telegram(order_id: str, send_thanks: bool = False) -> bool:
+    """Hapus pesan QR di Telegram dan opsional kirim teks terima kasih.
+
+    Fungsi ini sengaja re-query DB dari `order_id` supaya aman dipanggil setelah
+    commit/session close, dan aman dijadwalkan dari loop worker Pyrogram.
+    """
     from worker.client import get_worker
-    w = get_worker(account.id)
+
+    db: Session = SessionLocal()
+    try:
+        order = db.query(PaymentOrder).filter(PaymentOrder.order_id == order_id).first()
+        if not order:
+            return False
+        account = db.query(TelegramAccount).filter(TelegramAccount.id == order.account_id).first()
+        if not account:
+            return False
+
+        account_id = account.id
+        thanks = render_thanks(
+            account.gatepay_thanks_text,
+            base_amount=order.base_amount,
+            unique_amount=order.unique_amount,
+            ref=order.reference or "",
+        )
+        chat_raw = order.chat_id
+        tg_message_id = order.tg_message_id
+    finally:
+        db.close()
+
+    w = get_worker(account_id)
     if not w or not w.is_running:
-        return
+        return False
     client = w.client
 
-    thanks = render_thanks(
-        account.gatepay_thanks_text,
-        base_amount=order.base_amount,
-        unique_amount=order.unique_amount,
-        ref=order.reference or "",
-    )
-
     try:
-        chat_id = int(order.chat_id) if order.chat_id else None
+        chat_id = int(chat_raw) if chat_raw else None
     except Exception:
         chat_id = None
     if chat_id is None:
-        return
+        return False
 
     # Hapus pesan QR lama biar rapi (best-effort).
-    if order.tg_message_id:
+    if tg_message_id:
         try:
-            await client.delete_messages(chat_id, order.tg_message_id)
+            await client.delete_messages(chat_id, tg_message_id)
         except Exception:
             pass
 
-    reply_to = order.tg_message_id or None
-    try:
-        await client.send_message(chat_id, thanks, reply_to_message_id=reply_to)
-    except Exception:
+    if send_thanks:
         try:
             await client.send_message(chat_id, thanks)
         except Exception:
             pass
+
+    db = SessionLocal()
+    try:
+        saved = db.query(PaymentOrder).filter(PaymentOrder.order_id == order_id).first()
+        if saved:
+            saved.telegram_cleaned_at = datetime.utcnow()
+            db.commit()
+    finally:
+        db.close()
+    return True
+
+
+def schedule_order_telegram_cleanup(order_id: str, account_id: int | None, send_thanks: bool = False) -> bool:
+    """Jadwalkan cleanup ke event loop worker agar delete/send Pyrogram benar-benar jalan."""
+    import asyncio
+    from worker.client import get_worker
+
+    coro = cleanup_order_telegram(order_id, send_thanks=send_thanks)
+    w = get_worker(account_id) if account_id else None
+    wloop = getattr(getattr(w, "client", None), "loop", None) if w and w.is_running else None
+    if wloop is not None:
+        try:
+            asyncio.run_coroutine_threadsafe(coro, wloop)
+            return True
+        except Exception:
+            coro.close()
+            return False
+    try:
+        asyncio.create_task(coro)
+        return True
+    except Exception:
+        coro.close()
+        return False
 
 
 @router.post("/gatepay")
@@ -124,11 +177,17 @@ async def gatepay_webhook(request: Request):
         if not _verify(account.gatepay_callback_secret, raw, signature):
             raise HTTPException(401, "invalid signature")
 
-        # Idempotent: kalau sudah paid, skip notif.
-        already_paid = order.status == "paid"
+        # Idempotent: kalau sudah pernah cleanup Telegram, jangan spam balasan.
+        already_cleaned = bool(order.telegram_cleaned_at)
+        cleanup_send_thanks = False
+        cleanup_needed = False
+        cleanup_order_id = order.order_id
+        cleanup_account_id = account.id
 
         if event == "order.paid":
             order.status = "paid"
+            cleanup_needed = not already_cleaned
+            cleanup_send_thanks = bool(account.gatepay_notify_on_paid)
             if payload.get("unique_amount"):
                 try:
                     order.unique_amount = int(payload["unique_amount"])
@@ -143,11 +202,16 @@ async def gatepay_webhook(request: Request):
                 order.paid_at = datetime.utcnow()
         elif event in ("order.expired", "order.cancelled"):
             order.status = event.split(".", 1)[1]
+            cleanup_needed = not already_cleaned
 
         db.commit()
 
-        if event == "order.paid" and not already_paid and account.gatepay_notify_on_paid:
-            asyncio.create_task(_notify_paid(order, account))
+        if cleanup_needed:
+            schedule_order_telegram_cleanup(
+                cleanup_order_id,
+                cleanup_account_id,
+                send_thanks=cleanup_send_thanks,
+            )
 
         return {"ok": True}
     finally:

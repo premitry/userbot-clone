@@ -299,10 +299,10 @@ async def _execute(client, message, msg, arg, db):
 async def _execute_gatepay_qris(client, message, msg, arg, db):
     """QRIS via GatePay: buat order, kirim QR, simpan PaymentOrder untuk webhook."""
     import asyncio as _asyncio
-    from datetime import datetime
+    from datetime import datetime, timedelta
     from models import PaymentOrder, TelegramAccount
     from worker.qris_gen import generate_qris_image, parse_amount
-    from worker.gatepay_client import GatePayError, create_order
+    from worker.gatepay_client import GatePayError, cancel_order, create_order, get_order
 
     chat_id = message.chat.id
     content = (msg.content or "").replace("{arg}", arg)
@@ -342,6 +342,11 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
     unique_amount = int(order.get("unique_amount") or amount)
     order_id = str(order.get("id") or "")
     checkout_url = order.get("checkout_url") or ""
+    try:
+        remote_ttl = int(order.get("expires_in") or expires_in or 0)
+    except Exception:
+        remote_ttl = int(expires_in or 0) if expires_in else 0
+    expires_at = datetime.utcnow() + timedelta(seconds=remote_ttl) if remote_ttl > 0 else None
 
     img_path = generate_qris_image(
         payload,
@@ -403,6 +408,7 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
             status="pending",
             checkout_url=checkout_url,
             qris_payload=payload,
+            expires_at=expires_at,
             created_at=datetime.utcnow(),
         )
         db.add(po)
@@ -416,11 +422,47 @@ async def _execute_gatepay_qris(client, message, msg, arg, db):
         ttl = int(msg.qris_auto_delete_seconds or 0)
     except Exception:
         ttl = 0
-    if ttl > 0 and sent is not None:
-        async def _auto_del(_client, _cid, _mid, _delay):
+    if ttl > 0 and sent is not None and order_id:
+        async def _auto_del(_client, _cid, _mid, _delay, _order_id, _api_key):
             try:
                 await _asyncio.sleep(_delay)
-                await _client.delete_messages(_cid, _mid)
+                remote_status = "pending"
+                remote_paid_at = None
+                try:
+                    remote = await get_order(_api_key, _order_id)
+                    remote_status = str(remote.get("status") or "pending").lower().strip()
+                    remote_paid_at = remote.get("paid_at")
+                except Exception:
+                    remote_status = "pending"
+
+                db2 = SessionLocal()
+                send_thanks = False
+                try:
+                    saved = db2.query(PaymentOrder).filter(PaymentOrder.order_id == _order_id).first()
+                    acc2 = db2.query(TelegramAccount).filter(TelegramAccount.id == msg.account_id).first()
+                    if saved and saved.status == "pending":
+                        if remote_status in {"paid", "success", "settled"}:
+                            saved.status = "paid"
+                            send_thanks = bool(acc2.gatepay_notify_on_paid) if acc2 else False
+                            if not saved.paid_at:
+                                try:
+                                    saved.paid_at = datetime.utcfromtimestamp(int(remote_paid_at)) if remote_paid_at else datetime.utcnow()
+                                except Exception:
+                                    saved.paid_at = datetime.utcnow()
+                        else:
+                            try:
+                                await cancel_order(_api_key, _order_id)
+                            except Exception:
+                                pass
+                            saved.status = "expired"
+                        db2.commit()
+                    elif saved and saved.status == "paid":
+                        send_thanks = bool(acc2.gatepay_notify_on_paid) if acc2 else False
+                finally:
+                    db2.close()
+
+                from routers.webhooks import cleanup_order_telegram
+                await cleanup_order_telegram(_order_id, send_thanks=send_thanks)
             except Exception:
                 pass
-        _asyncio.create_task(_auto_del(client, chat_id, sent.id, ttl))
+        _asyncio.create_task(_auto_del(client, chat_id, sent.id, ttl, order_id, api_key))

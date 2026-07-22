@@ -5,20 +5,23 @@ Semua endpoint di-scope ke akun aktif (get_active_account_id).
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from active_account import get_active_account_id
 from auth import get_current_user
 from database import get_db
-from models import PaymentOrder, TelegramAccount, User
-from routers.webhooks import DEFAULT_THANKS_TEXT, render_thanks
+from models import Message, PaymentOrder, TelegramAccount, User
+from routers.webhooks import DEFAULT_THANKS_TEXT, render_thanks, schedule_order_telegram_cleanup
 from schemas import (
     GatePayOrderResponse, GatePaySettings, GatePaySettingsUpdate,
 )
 from worker.client import get_worker
-from worker.gatepay_client import GatePayError, test_connection
+from worker.gatepay_client import GatePayError, cancel_order, test_connection
 
 router = APIRouter(prefix="/api/gatepay", tags=["GatePay"])
 
@@ -31,6 +34,35 @@ def _require_active(db: Session) -> TelegramAccount:
     if not acc:
         raise HTTPException(404, "Akun aktif tidak ditemukan")
     return acc
+
+
+def _map_gatepay_status(raw: str | None, fallback: str = "pending") -> str:
+    status = str(raw or "").lower().strip()
+    mapping = {
+        "paid": "paid", "success": "paid", "settled": "paid",
+        "pending": "pending", "waiting": "pending", "unpaid": "pending",
+        "expired": "expired",
+        "cancel": "cancelled", "cancelled": "cancelled", "canceled": "cancelled",
+        "failed": "failed", "error": "failed",
+    }
+    return mapping.get(status, fallback)
+
+
+def _order_expires_at(db: Session, order: PaymentOrder) -> datetime | None:
+    if order.expires_at:
+        return order.expires_at
+    ttl = 0
+    if order.message_id:
+        msg = db.query(Message).filter(Message.id == order.message_id).first()
+        try:
+            ttl = int(getattr(msg, "qris_auto_delete_seconds", 0) or 0) if msg else 0
+        except Exception:
+            ttl = 0
+    if ttl <= 0:
+        return None
+    base = order.created_at or datetime.utcnow()
+    order.expires_at = base + timedelta(seconds=max(60, ttl))
+    return order.expires_at
 
 
 @router.get("/settings", response_model=GatePaySettings)
@@ -161,7 +193,6 @@ async def sync_orders(
     Berguna kalau order sudah cancelled/expired/paid di sisi GatePay tapi
     webhook nggak nyampe (mis. server down / URL salah).
     """
-    from datetime import datetime as _dt
     from worker.gatepay_client import get_order as _get_order
 
     acc = _require_active(db)
@@ -171,71 +202,78 @@ async def sync_orders(
     q = (
         db.query(PaymentOrder)
         .filter(PaymentOrder.account_id == acc.id)
-        .filter(PaymentOrder.status == "pending")
+        .filter(or_(
+            PaymentOrder.status == "pending",
+            and_(
+                PaymentOrder.status.in_(["paid", "expired", "cancelled", "failed"]),
+                PaymentOrder.telegram_cleaned_at.is_(None),
+            ),
+        ))
         .order_by(PaymentOrder.created_at.desc())
         .limit(min(limit, 200))
     )
     orders = q.all()
     updated = 0
     errors: list[str] = []
+    cleanup_jobs: list[tuple[str, int | None, bool]] = []
+    now = datetime.utcnow()
     for o in orders:
+        if o.status in {"paid", "expired", "cancelled", "failed"}:
+            cleanup_jobs.append((o.order_id, o.account_id, o.status == "paid" and bool(acc.gatepay_notify_on_paid)))
+            continue
+
+        expires_at = _order_expires_at(db, o)
+        data: dict = {}
         try:
             data = await _get_order(acc.gatepay_api_key, o.order_id)
         except GatePayError as e:
             # 404 = order sudah hilang di sisi provider → anggap cancelled.
             if getattr(e, "status", 0) == 404:
                 o.status = "cancelled"
+                cleanup_jobs.append((o.order_id, o.account_id, False))
+                updated += 1
+                continue
+            if expires_at and expires_at <= now:
+                o.status = "expired"
+                cleanup_jobs.append((o.order_id, o.account_id, False))
                 updated += 1
                 continue
             errors.append(f"{o.order_id}: {e}")
             continue
         except Exception as e:  # noqa: BLE001
+            if expires_at and expires_at <= now:
+                o.status = "expired"
+                cleanup_jobs.append((o.order_id, o.account_id, False))
+                updated += 1
+                continue
             errors.append(f"{o.order_id}: {e}")
             continue
 
-        remote_status = str(data.get("status") or "").lower().strip()
-        mapping = {
-            "paid": "paid", "success": "paid", "settled": "paid",
-            "pending": "pending", "waiting": "pending", "unpaid": "pending",
-            "expired": "expired",
-            "cancel": "cancelled", "cancelled": "cancelled", "canceled": "cancelled",
-            "failed": "failed", "error": "failed",
-        }
-        new_status = mapping.get(remote_status, o.status)
-        newly_paid = False
+        new_status = _map_gatepay_status(data.get("status"), o.status)
+        if new_status == "pending" and expires_at and expires_at <= now:
+            try:
+                await cancel_order(acc.gatepay_api_key, o.order_id)
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{o.order_id}: cancel expired: {e}")
+            new_status = "expired"
+
         if new_status != o.status:
-            was_paid = o.status == "paid"
             o.status = new_status
             if new_status == "paid" and not o.paid_at:
                 paid_at = data.get("paid_at")
                 try:
-                    o.paid_at = _dt.utcfromtimestamp(int(paid_at)) if paid_at else _dt.utcnow()
+                    o.paid_at = datetime.utcfromtimestamp(int(paid_at)) if paid_at else datetime.utcnow()
                 except Exception:
-                    o.paid_at = _dt.utcnow()
-            if new_status == "paid" and not was_paid:
-                newly_paid = True
+                    o.paid_at = datetime.utcnow()
             updated += 1
-        if newly_paid and acc.gatepay_notify_on_paid:
-            import asyncio as _asyncio
-            from routers.webhooks import _notify_paid as _notify
-            # Worker Pyrogram jalan di loop/thread sendiri. Kalau kita cuma
-            # create_task di loop FastAPI, delete/send-nya bakal gagal diam-
-            # diam. Jadwalkan di loop worker via run_coroutine_threadsafe.
-            w = get_worker(acc.id)
-            scheduled = False
-            if w and w.is_running:
-                wloop = getattr(w.client, "loop", None)
-                if wloop is not None:
-                    try:
-                        _asyncio.run_coroutine_threadsafe(_notify(o, acc), wloop)
-                        scheduled = True
-                    except Exception as _e:
-                        errors.append(f"{o.order_id}: notify schedule: {_e}")
-            if not scheduled:
-                _asyncio.create_task(_notify(o, acc))
+        if new_status in {"paid", "expired", "cancelled", "failed"} and not o.telegram_cleaned_at:
+            cleanup_jobs.append((o.order_id, o.account_id, new_status == "paid" and bool(acc.gatepay_notify_on_paid)))
 
     db.commit()
-    return {"ok": True, "checked": len(orders), "updated": updated, "errors": errors}
+    for order_id, account_id, send_thanks in cleanup_jobs:
+        if not schedule_order_telegram_cleanup(order_id, account_id, send_thanks=send_thanks):
+            errors.append(f"{order_id}: cleanup Telegram gagal dijadwalkan")
+    return {"ok": True, "checked": len(orders), "updated": updated, "cleanups": len(cleanup_jobs), "errors": errors}
 
 
 @router.get("/orders", response_model=list[GatePayOrderResponse])
